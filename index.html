@@ -252,7 +252,6 @@
     <main>
         <section id="seccion-info">
             <h2>Última Actualización / Información</h2>
-            <!-- CORREGIDO: También busca la info en formato .png por si acaso -->
             <img src="info/reciente.png" alt="Información Reciente" onerror="this.parentNode.style.display='none';">
         </section>
 
@@ -278,13 +277,13 @@
                     const capDiv = document.createElement('div');
                     capDiv.className = 'capitulo-contenedor';
 
-                    // CORREGIDO: Ahora busca la miniatura automática con extensión .png
                     const rutaPortada = `${cap.carpeta}/Página 01.png`;
 
                     capDiv.innerHTML = `
                         <div class="capitulo-cabecera" onclick="toggleCapitulo(this)">
                             <div class="cabecera-izquierda">
-                                <img src="${rutaPortada}" class="capitulo-miniatura" alt="Miniatura">
+                                <!-- Truco automático: si falla la miniatura .png, busca .PNG -->
+                                <img src="${rutaPortada}" class="capitulo-miniatura" alt="Miniatura" onerror="if(this.src.includes('.png')) this.src=this.src.replace('.png', '.PNG');">
                                 <span class="capitulo-titulo">${cap.titulo}</span>
                             </div>
                             <div class="flecha-icono">▼</div>
@@ -298,10 +297,13 @@
                         const numeroPagina = String(i).padStart(2, '0');
                         const img = document.createElement('img');
                         
-                        // CORREGIDO: El lazo automático ahora genera rutas que terminan en .png
                         img.setAttribute('data-src', `${cap.carpeta}/Página ${numeroPagina}.png`);
                         img.alt = `Página ${numeroPagina}`;
                         img.loading = "lazy";
+                        
+                        // Truco automático para las páginas: si falla .png, cambia a .PNG solo
+                        img.setAttribute('onerror', "if(this.src.includes('.png')) this.src=this.src.replace('.png', '.PNG');");
+                        
                         divPaginas.appendChild(img);
                     }
 
