@@ -267,9 +267,10 @@
     </footer>
 
     <script>
-       async function cargarManga() {
+        async function cargarManga() {
             try {
-                const respuesta = await fetch('./manga-data.json');
+                // Volvemos a la ruta limpia que sí te abría la barra
+                const respuesta = await fetch('manga-data.json');
                 const datos = await respuesta.json();
                 const contenedor = document.getElementById('contenedor-manga');
 
@@ -277,9 +278,10 @@
                     const capDiv = document.createElement('div');
                     capDiv.className = 'capitulo-contenedor';
 
-                    // Forzamos la ruta limpia usando encodeURIComponent por si el espacio o la tilde fallan
-                    const nombrePortada = "Página 01.png";
-                    const rutaPortada = `./${cap.carpeta}/${nombrePortada}`;
+                    // Corregido: Traduce el espacio y la tilde correctamente para el servidor
+                    const folder = encodeURIComponent(cap.carpeta);
+                    const filePortada = encodeURIComponent("Página 01.png");
+                    const rutaPortada = `${folder}/${filePortada}`;
 
                     capDiv.innerHTML = `
                         <div class="capitulo-cabecera" onclick="toggleCapitulo(this)">
@@ -297,10 +299,10 @@
                     for (let i = 1; i <= cap.totalPaginas; i++) {
                         const numeroPagina = String(i).padStart(2, '0');
                         const img = document.createElement('img');
-                        const nombreArchivo = `Página ${numeroPagina}.png`;
                         
-                        // Usamos rutas relativas explícitas con './'
-                        img.setAttribute('data-src', `./${cap.carpeta}/${nombreArchivo}`);
+                        // Corregido: Traduce de forma segura cada panel
+                        const nombreArchivo = encodeURIComponent(`Página ${numeroPagina}.png`);
+                        img.setAttribute('data-src', `${folder}/${nombreArchivo}`);
                         img.alt = `Página ${numeroPagina}`;
                         img.loading = "lazy";
                         
@@ -313,9 +315,7 @@
                 });
 
             } catch (error) {
-                console.log("Configurando mapa...", error);
-            }
-        }
+                console.log("Error cargando el archivo JSON...", error);
             }
         }
 
