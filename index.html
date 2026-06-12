@@ -1,1 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thalesis - Portal Oficial</title>
+    <style>
+        /* ESTILO SEINEN / DARK - EN NEGRO PURO */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Impact', 'Arial Black', sans-serif;
+        }
 
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Cabecera Principal con el Nombre de tu Portal */
+        header {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            padding: 40px 0 20px 0;
+            border-bottom: 3px solid #ffffff;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 3.5rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            text-shadow: 3px 3px 0px #ff6600; /* Toque naranja brutal */
+        }
+
+        main {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Sección de Información / Avisos (Arriba) */
+        #seccion-info {
+            width: 100%;
+            background-color: #111111;
+            border: 2px dashed #333333;
+            padding: 15px;
+            text-align: center;
+            border-radius: 4px;
+        }
+
+        #seccion-info h2 {
+            font-size: 1.2rem;
+            color: #ff6600;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #seccion-info img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #222222;
+        }
+
+        /* Contenedor donde se fabrican los Capítulos solos */
+        .lista-capitulos {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        /* La Tirita del Capítulo */
+        .capitulo-contenedor {
+            background-color: #0c0c0c;
+            border: 2px solid #222222;
+            border-radius: 4px;
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+
+        .capitulo-contenedor:hover {
+            border-color: #ff6600;
+        }
+
+        /* Barra superior de la tirita (Donde el usuario hace clic) */
+        .capitulo-cabecera {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            cursor: pointer;
+            user-select: none;
+            background-color: #0a0a0a;
+        }
+
+        .cabecera-izquierda {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* El cuadrito de la miniatura automática (Página 1) */
+        .capitulo-miniatura {
+            width: 50px;
+            height: 70px;
+            background-color: #151515;
+            border: 1px solid #333333;
+            object-fit: cover;
+            border-radius: 2px;
+        }
+
+        .capitulo-titulo {
+            font-size: 1.4rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .flecha-icono {
+            font-size: 1.5rem;
+            color: #666666;
+            transition: transform 0.3s, color 0.3s;
+        }
+
+        .capitulo-contenedor.abierto .flecha-icono {
+            transform: rotate(180deg);
+            color: #ff6600;
+        }
+
+        /* Contenido desplegable (Cascada de páginas estilo Webtoon) */
+        .capitulo-paginas {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            background-color: #000000;
+            border-top: 2px solid #1a1a1a;
+            padding: 10px 0;
+        }
+
+        .capitulo-paginas img {
+            width: 100%;
+            max-width: 750px; /* Tamaño ideal para leer los paneles en PC y móvil */
+            height: auto;
+            display: block;
+            margin-bottom: 0; /* Totalmente pegadas hacia abajo */
+            background-color: #000000;
+        }
+
+        /* Pie de página (Tus Redes Sociales) */
+        footer {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            padding: 30px 0;
+            border-top: 1px solid #222222;
+            margin-top: auto;
+        }
+
+        footer p {
+            font-size: 0.9rem;
+            color: #444444;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .redes-links {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+        }
+
+        .redes-links a {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+
+        .redes-links a:hover {
+            color: #ff6600;
+        }
+
+        /* Ajustes para pantallas de celulares */
+        @media (max-width: 600px) {
+            header h1 { font-size: 2.5rem; }
+            .capitulo-titulo { font-size: 1.1rem; }
+            .capitulo-miniatura { width: 40px; height: 55px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Thalesis</h1>
+    </header>
+
+    <main>
+        <section id="seccion-info">
+            <h2>Última Actualización / Información</h2>
+            <img src="info/reciente.jpg" alt="Información Reciente" onerror="this.parentNode.style.display='none';">
+        </section>
+
+        <section class="lista-capitulos" id="contenedor-manga"></section>
+    </main>
+
+    <footer>
+        <p>© Thalesis - Todos los derechos reservados</p>
+        <div class="redes-links">
+            <a href="https://youtube.com" target="_blank">YouTube</a>
+            <a href="https://tiktok.com" target="_blank">TikTok</a>
+        </div>
+    </footer>
+
+    <script>
+        // ORDEN AUTOMÁTICA PARA DETECTAR TUS CAPÍTULOS
+        async function cargarManga() {
+            try {
+                const respuesta = await fetch('manga-data.json');
+                const datos = await respuesta.json();
+                const contenedor = document.getElementById('contenedor-manga');
+
+                datos.capitulos.forEach(cap => {
+                    const capDiv = document.createElement('div');
+                    capDiv.className = 'capitulo-contenedor';
+
+                    // Ruta de la primera página del capítulo para usar de miniatura
+                    const rutaPortada = `contenido/${cap.carpeta}/01.jpg`;
+
+                    // Armar la barra del capítulo
+                    capDiv.innerHTML = `
+                        <div class="capitulo-cabecera" onclick="toggleCapitulo(this)">
+                            <div class="cabecera-izquierda">
+                                <img src="${rutaPortada}" class="capitulo-miniatura" alt="Miniatura">
+                                <span class="capitulo-titulo">${cap.titulo}</span>
+                            </div>
+                            <div class="flecha-icono">▼</div>
+                        </div>
+                        <div class="capitulo-paginas"></div>
+                    `;
+
+                    const divPaginas = capDiv.querySelector('.capitulo-paginas');
+
+                    // Fabricar la lista de páginas dentro de la tirita
+                    for (let i = 1; i <= cap.totalPaginas; i++) {
+                        const numeroPagina = String(i).padStart(2, '0'); // Convierte 1 en 01, 2 en 02, etc.
+                        const img = document.createElement('img');
+                        // Se guarda la ruta real para el truco de carga inteligente
+                        img.setAttribute('data-src', `contenido/${cap.carpeta}/${numeroPagina}.jpg`);
+                        img.alt = `Página ${numeroPagina}`;
+                        img.loading = "lazy"; // No gasta internet innecesario
+                        divPaginas.appendChild(img);
+                    }
+
+                    contenedor.appendChild(capDiv);
+                });
+
+            } catch (error) {
+                console.log("Esperando que configures tus carpetas y el archivo manga-data.json...", error);
+            }
+        }
+
+        // El mecanismo para abrir y cerrar la tirita al hacer clic
+        function toggleCapitulo(cabecera) {
+            const contenedor = cabecera.parentElement;
+            const cuerpoPaginas = contenedor.querySelector('.capitulo-paginas');
+            
+            contenedor.classList.toggle('abierto');
+
+            if (contenedor.classList.contains('abierto')) {
+                cuerpoPaginas.style.display = 'flex';
+                
+                // Carga inteligente: la página real solo se descarga cuando se abre la tirita
+                const imagenes = cuerpoPaginas.querySelectorAll('img');
+                imagenes.forEach(img => {
+                    if(img.getAttribute('data-src')) {
+                        img.src = img.getAttribute('data-src');
+                        img.removeAttribute('data-src');
+                    }
+                });
+            } else {
+                cuerpoPaginas.style.display = 'none';
+            }
+        }
+
+        window.onload = cargarManga;
+    </script>
+</body>
+</html>
