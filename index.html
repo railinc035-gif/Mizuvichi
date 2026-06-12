@@ -267,9 +267,9 @@
     </footer>
 
     <script>
-        async function cargarManga() {
+       async function cargarManga() {
             try {
-                const respuesta = await fetch('manga-data.json');
+                const respuesta = await fetch('./manga-data.json');
                 const datos = await respuesta.json();
                 const contenedor = document.getElementById('contenedor-manga');
 
@@ -277,12 +277,13 @@
                     const capDiv = document.createElement('div');
                     capDiv.className = 'capitulo-contenedor';
 
-                    const rutaPortada = `${cap.carpeta}/Página 01.png`;
+                    // Forzamos la ruta limpia usando encodeURIComponent por si el espacio o la tilde fallan
+                    const nombrePortada = "Página 01.png";
+                    const rutaPortada = `./${cap.carpeta}/${nombrePortada}`;
 
                     capDiv.innerHTML = `
                         <div class="capitulo-cabecera" onclick="toggleCapitulo(this)">
                             <div class="cabecera-izquierda">
-                                <!-- Truco automático: si falla la miniatura .png, busca .PNG -->
                                 <img src="${rutaPortada}" class="capitulo-miniatura" alt="Miniatura" onerror="if(this.src.includes('.png')) this.src=this.src.replace('.png', '.PNG');">
                                 <span class="capitulo-titulo">${cap.titulo}</span>
                             </div>
@@ -296,12 +297,13 @@
                     for (let i = 1; i <= cap.totalPaginas; i++) {
                         const numeroPagina = String(i).padStart(2, '0');
                         const img = document.createElement('img');
+                        const nombreArchivo = `Página ${numeroPagina}.png`;
                         
-                        img.setAttribute('data-src', `${cap.carpeta}/Página ${numeroPagina}.png`);
+                        // Usamos rutas relativas explícitas con './'
+                        img.setAttribute('data-src', `./${cap.carpeta}/${nombreArchivo}`);
                         img.alt = `Página ${numeroPagina}`;
                         img.loading = "lazy";
                         
-                        // Truco automático para las páginas: si falla .png, cambia a .PNG solo
                         img.setAttribute('onerror', "if(this.src.includes('.png')) this.src=this.src.replace('.png', '.PNG');");
                         
                         divPaginas.appendChild(img);
@@ -312,6 +314,8 @@
 
             } catch (error) {
                 console.log("Configurando mapa...", error);
+            }
+        }
             }
         }
 
@@ -334,15 +338,7 @@
                 cuerpoPaginas.style.display = 'none';
             }
         }
-{
-  "capitulos": [
-    {
-      "titulo": "Capítulo 1: Funeral para nadie",
-      "carpeta": "Cap_01",
-      "totalPaginas": 22
-    }
-  ]
-}
+
         window.onload = cargarManga;
     </script>
 </body>
