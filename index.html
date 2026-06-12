@@ -14,8 +14,8 @@
         }
 
         body {
-            background-color: #050505; /* Negro casi absoluto */
-            background-image: radial-gradient(circle at top, #150b00 0%, #050505 70%); /* Sutil atmósfera naranja al fondo */
+            background-color: #050505;
+            background-image: radial-gradient(circle at top, #150b00 0%, #050505 70%);
             color: #ffffff;
             display: flex;
             flex-direction: column;
@@ -24,7 +24,6 @@
             padding: 20px;
         }
 
-        /* Cabecera Principal */
         header {
             width: 100%;
             max-width: 750px;
@@ -56,7 +55,6 @@
             gap: 35px;
         }
 
-        /* Sección de Información / Avisos (Arriba) */
         #seccion-info {
             width: 100%;
             background: linear-gradient(135deg, #0e0e0e 0%, #070707 100%);
@@ -82,7 +80,6 @@
             border-radius: 4px;
         }
 
-        /* Contenedor de Capítulos */
         .lista-capitulos {
             display: flex;
             flex-direction: column;
@@ -90,7 +87,6 @@
             margin-bottom: 50px;
         }
 
-        /* La Tirita del Capítulo Premium */
         .capitulo-contenedor {
             background: #0d0d0d;
             border: 1px solid #1f1f1f;
@@ -106,7 +102,6 @@
             transform: translateY(-2px);
         }
 
-        /* Barra superior de la tirita */
         .capitulo-cabecera {
             display: flex;
             align-items: center;
@@ -123,7 +118,6 @@
             gap: 20px;
         }
 
-        /* Miniatura automática */
         .capitulo-miniatura {
             width: 55px;
             height: 75px;
@@ -173,7 +167,6 @@
             text-shadow: 0 0 8px #ff6600;
         }
 
-        /* Contenido desplegable (Páginas) */
         .capitulo-paginas {
             display: none;
             flex-direction: column;
@@ -197,7 +190,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Pie de página (Redes) */
         footer {
             width: 100%;
             max-width: 750px;
@@ -242,7 +234,6 @@
             transform: translateY(-2px);
         }
 
-        /* Celulares */
         @media (max-width: 600px) {
             header h1 { font-size: 2.8rem; letter-spacing: 3px; }
             .capitulo-titulo { font-size: 1.2rem; }
@@ -259,13 +250,12 @@
     </header>
 
     <main>
-        <!-- Sección de Info -->
         <section id="seccion-info">
             <h2>Última Actualización / Información</h2>
-            <img src="info/reciente.jpg" alt="Información Reciente" onerror="this.parentNode.style.display='none';">
+            <!-- CORREGIDO: También busca la info en formato .png por si acaso -->
+            <img src="info/reciente.png" alt="Información Reciente" onerror="this.parentNode.style.display='none';">
         </section>
 
-        <!-- Lista de capítulos -->
         <section class="lista-capitulos" id="contenedor-manga"></section>
     </main>
 
@@ -288,7 +278,8 @@
                     const capDiv = document.createElement('div');
                     capDiv.className = 'capitulo-contenedor';
 
-                    const rutaPortada = `contenido/${cap.carpeta}/01.jpg`;
+                    // CORREGIDO: Ahora busca la miniatura automática con extensión .png
+                    const rutaPortada = `${cap.carpeta}/Página 01.png`;
 
                     capDiv.innerHTML = `
                         <div class="capitulo-cabecera" onclick="toggleCapitulo(this)">
@@ -306,7 +297,9 @@
                     for (let i = 1; i <= cap.totalPaginas; i++) {
                         const numeroPagina = String(i).padStart(2, '0');
                         const img = document.createElement('img');
-                        img.setAttribute('data-src', `contenido/${cap.carpeta}/${numeroPagina}.jpg`);
+                        
+                        // CORREGIDO: El lazo automático ahora genera rutas que terminan en .png
+                        img.setAttribute('data-src', `${cap.carpeta}/Página ${numeroPagina}.png`);
                         img.alt = `Página ${numeroPagina}`;
                         img.loading = "lazy";
                         divPaginas.appendChild(img);
