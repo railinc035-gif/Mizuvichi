@@ -23,12 +23,22 @@ body{
 header{
     text-align:center;
     padding:30px 15px;
-    border-bottom:2px solid #ff0000;
-    box-shadow:0 0 20px #ff0000;
+    border-bottom:2px solid #300000; 
+    transition: all 0.4s ease;
 }
 
 header h1{
     font-size:3rem;
+    color:#888; 
+    transition: all 0.4s ease;
+}
+
+header:hover, header:active {
+    border-bottom:2px solid #ff0000;
+    box-shadow:0 0 20px #ff0000;
+}
+
+header:hover h1, header:active h1 {
     color:#fff;
     text-shadow:0 0 10px #ff0000,
                 0 0 20px #ff0000,
@@ -41,35 +51,67 @@ header h1{
     margin:25px auto;
 }
 
-/* Modificado para que no encierre las imágenes de forma tan rígida */
 .info-box{
-    border:2px solid #b30000;
-    box-shadow:0 0 15px #b30000;
+    border:2px solid #300000; 
     border-radius:12px;
     overflow:hidden;
-    background: #050505; /* Fondo idéntico al body para cortes limpios */
-    padding: 10px; /* Un pequeño colchón interno para separar las imágenes del borde neón */
+    background: #050505;
+    padding: 10px;
+    transition: all 0.4s ease;
 }
 
-/* MODIFICADO: Separación real entre avisos para que no parezcan fusionados */
+.info-box:hover, .info-box:active {
+    border-color: #b30000;
+    box-shadow: 0 0 20px #b30000;
+}
+
+/* MODIFICADO: Contenedor individual para cada aviso, necesario para la etiqueta flotante */
+.aviso-wrapper {
+    position: relative; /* Permite posicionar la etiqueta encima */
+    width: 100%;
+    display: block;
+}
+
 .info-box img{
     width:100%;
     display:block;
-    border-radius: 8px; /* Redondeado individual para cada aviso */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Sombra para despegarlos del fondo */
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
-/* Aplica espacio negro solo si hay más de un aviso en la carpeta */
-.info-box img:not(:last-child) {
-    margin-bottom: 20px; /* 20 píxeles de separación negra pura entre cada banner */
+.aviso-wrapper:not(:last-child) {
+    margin-bottom: 20px; /* Separación negra entre avisos */
+}
+
+/* NUEVO: Estilo para la etiqueta verde brillante de "NUEVO" */
+.badge-nuevo {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: #00ff66;
+    color: #000;
+    font-weight: bold;
+    font-size: 0.8rem;
+    padding: 5px 12px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    box-shadow: 0 0 15px #00ff66; /* Brillo neón verde */
+    z-index: 10;
+    letter-spacing: 1px;
 }
 
 .chapter{
-    border:2px solid #ff0000;
+    border:2px solid #300000; 
     border-radius:12px;
     margin-bottom:20px;
     overflow:hidden;
-    box-shadow:0 0 15px #ff0000;
+    transition: all 0.3s ease; 
+}
+
+.chapter:hover, .chapter:active {
+    border-color: #ff0000;
+    box-shadow: 0 0 20px #ff0000;
+    transform: translateY(-2px); 
 }
 
 .chapter-header{
@@ -79,6 +121,7 @@ header h1{
     align-items:center;
     justify-content:space-between;
     background:#111;
+    transition: background 0.3s;
 }
 
 .chapter-header:hover{
@@ -173,7 +216,7 @@ header h1{
 }
 
 .social a{
-    color:white;
+    color:#888;
     text-decoration:none;
     font-size:1.3rem;
     margin:0 25px;
@@ -183,7 +226,7 @@ header h1{
     transition: 0.3s;
 }
 
-.social a:hover{
+.social a:hover, .social a:active{
     color: #ff0000;
     text-shadow: 0 0 10px #ff0000;
 }
@@ -218,7 +261,7 @@ header h1{
 
 <div class="social">
     <a href="https://www.youtube.com/@RAYLINAC-n6x" target="_blank">
-        <i class="fab fa-youtube" style="color: #ff0000;"></i> YouTube
+        <i class="fab fa-youtube"></i> YouTube
     </a>
     <a href="https://www.tiktok.com/@r_.fin.com" target="_blank">
         <i class="fab fa-tiktok"></i> TikTok
@@ -262,18 +305,33 @@ async function cargarAvisos() {
         
         const pngs = archivos
             .filter(p => p.name.toLowerCase().endsWith(".png"))
-            .sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
+            // MODIFICADO: Cambiado el orden b.name.localeCompare(a.name) para que el número más alto salga primero
+            .sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true}));
 
         if (pngs.length === 0) {
             contenedorAvisos.parentElement.style.display = "none";
             return;
         }
 
-        pngs.forEach(img => {
+        // MODIFICADO: Lógica para envolver las imágenes y clavar la etiqueta verde al primer elemento
+        pngs.forEach((img, index) => {
+            const wrapper = document.createElement("div");
+            wrapper.className = "aviso-wrapper";
+
+            // Si es el primer elemento (el más reciente), le mete el tag verde de "NUEVO"
+            if (index === 0) {
+                const tag = document.createElement("span");
+                tag.className = "badge-nuevo";
+                tag.innerText = "Nuevo";
+                wrapper.appendChild(tag);
+            }
+
             const imageElement = document.createElement("img");
             imageElement.src = img.download_url;
             imageElement.alt = "Aviso Informativo";
-            contenedorAvisos.appendChild(imageElement);
+            
+            wrapper.appendChild(imageElement);
+            contenedorAvisos.appendChild(wrapper);
         });
 
     } catch (error) {
