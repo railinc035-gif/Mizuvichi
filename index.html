@@ -41,7 +41,6 @@ header h1{
     margin:25px auto;
 }
 
-/* Modificado para que si hay varios avisos, no se peguen */
 .info-box{
     border:2px solid #b30000;
     box-shadow:0 0 15px #b30000;
@@ -57,7 +56,7 @@ header h1{
 }
 
 .info-box img:not(:last-child) {
-    border-bottom: 1px solid #b30000; /* Línea divisoria si subes más de un aviso */
+    border-bottom: 1px solid #b30000;
 }
 
 .chapter{
@@ -154,11 +153,14 @@ header h1{
     padding: 0 10px;
 }
 
+/* MODIFICADO: Agregada la separación y sombras de estilo manga oficial */
 .viewer-content img {
     width: 100%;
     display: block;
-    margin-bottom: 10px;
-    border-radius: 4px;
+    margin-bottom: 30px; /* Espacio de separación entre páginas */
+    border-radius: 6px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7); /* Sombra para dar profundidad */
+    border: 1px solid #111; /* Borde sutil para despegar el arte del fondo negro */
 }
 
 .social{
@@ -242,14 +244,12 @@ function formatearNombreCapitulo(nombreCarpeta) {
     return nombreCarpeta.replace("Cap_", "Capítulo ");
 }
 
-// NUEVA FUNCIÓN: Carga las imágenes de la carpeta "Aviso" automáticamente
 async function cargarAvisos() {
     const contenedorAvisos = document.getElementById("aviso-container");
     
     try {
         const respuesta = await fetch(`${api}/Aviso`);
         
-        // Si la carpeta no existe o está vacía, ocultamos la sección de avisos para que no quede fea
         if (!respuesta.ok) {
             contenedorAvisos.parentElement.style.display = "none";
             return;
@@ -257,7 +257,6 @@ async function cargarAvisos() {
 
         const archivos = await respuesta.json();
         
-        // Filtramos solo imágenes .png y las ordenamos por nombre
         const pngs = archivos
             .filter(p => p.name.toLowerCase().endsWith(".png"))
             .sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
@@ -267,7 +266,6 @@ async function cargarAvisos() {
             return;
         }
 
-        // Metemos las imágenes encontradas dentro del contenedor de avisos
         pngs.forEach(img => {
             const imageElement = document.createElement("img");
             imageElement.src = img.download_url;
@@ -425,7 +423,6 @@ visorContainer.addEventListener("scroll", () => {
     ultimoScroll = scrollActual;
 });
 
-// Ejecutamos ambas cargas automáticas al iniciar la página
 cargarAvisos();
 cargarCapitulos();
 
