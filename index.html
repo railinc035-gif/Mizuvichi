@@ -41,22 +41,27 @@ header h1{
     margin:25px auto;
 }
 
+/* Modificado para que no encierre las imágenes de forma tan rígida */
 .info-box{
     border:2px solid #b30000;
     box-shadow:0 0 15px #b30000;
     border-radius:12px;
     overflow:hidden;
-    background: #0a0a0a;
+    background: #050505; /* Fondo idéntico al body para cortes limpios */
+    padding: 10px; /* Un pequeño colchón interno para separar las imágenes del borde neón */
 }
 
+/* MODIFICADO: Separación real entre avisos para que no parezcan fusionados */
 .info-box img{
     width:100%;
     display:block;
-    margin-bottom: 0;
+    border-radius: 8px; /* Redondeado individual para cada aviso */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Sombra para despegarlos del fondo */
 }
 
+/* Aplica espacio negro solo si hay más de un aviso en la carpeta */
 .info-box img:not(:last-child) {
-    border-bottom: 1px solid #b30000;
+    margin-bottom: 20px; /* 20 píxeles de separación negra pura entre cada banner */
 }
 
 .chapter{
@@ -153,14 +158,13 @@ header h1{
     padding: 0 10px;
 }
 
-/* MODIFICADO: Agregada la separación y sombras de estilo manga oficial */
 .viewer-content img {
     width: 100%;
     display: block;
-    margin-bottom: 30px; /* Espacio de separación entre páginas */
+    margin-bottom: 30px; 
     border-radius: 6px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7); /* Sombra para dar profundidad */
-    border: 1px solid #111; /* Borde sutil para despegar el arte del fondo negro */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7); 
+    border: 1px solid #111; 
 }
 
 .social{
@@ -232,7 +236,6 @@ const api =
 let listaCapitulosGuardados = [];
 let indiceCapituloActual = -1;
 
-// DICCIONARIO DE NOMBRES
 const nombresDeCapitulos = {
     "Cap_01": "Capítulo 01: Funeral para nadie"
 };
