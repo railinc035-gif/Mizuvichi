@@ -18,9 +18,11 @@ body{
     background:#050505;
     color:white;
     font-family:Arial, sans-serif;
+    overflow-x: hidden;
 }
 
 header{
+    position: relative; 
     text-align:center;
     padding:30px 15px;
     border-bottom:2px solid #300000; 
@@ -45,6 +47,27 @@ header:hover h1, header:active h1 {
                 0 0 40px #b30000;
 }
 
+.global-counter {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 0.9rem;
+    color: #666;
+    background: #0a0a0a;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid #222;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+}
+header:hover .global-counter, header:active .global-counter {
+    color: #ff0000;
+    border-color: #ff0000;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
+}
+
 .section{
     width:95%;
     max-width:1000px;
@@ -65,9 +88,8 @@ header:hover h1, header:active h1 {
     box-shadow: 0 0 20px #b30000;
 }
 
-/* MODIFICADO: Contenedor individual para cada aviso, necesario para la etiqueta flotante */
 .aviso-wrapper {
-    position: relative; /* Permite posicionar la etiqueta encima */
+    position: relative; 
     width: 100%;
     display: block;
 }
@@ -80,10 +102,9 @@ header:hover h1, header:active h1 {
 }
 
 .aviso-wrapper:not(:last-child) {
-    margin-bottom: 20px; /* Separación negra entre avisos */
+    margin-bottom: 20px; 
 }
 
-/* NUEVO: Estilo para la etiqueta verde brillante de "NUEVO" */
 .badge-nuevo {
     position: absolute;
     top: 12px;
@@ -95,7 +116,7 @@ header:hover h1, header:active h1 {
     padding: 5px 12px;
     border-radius: 6px;
     text-transform: uppercase;
-    box-shadow: 0 0 15px #00ff66; /* Brillo neón verde */
+    box-shadow: 0 0 15px #00ff66; 
     z-index: 10;
     letter-spacing: 1px;
 }
@@ -124,7 +145,7 @@ header:hover h1, header:active h1 {
     transition: background 0.3s;
 }
 
-.chapter-header:hover{
+.chapter-header:hover {
     background:#1a1a1a;
 }
 
@@ -139,6 +160,15 @@ header:hover h1, header:active h1 {
     height:90px;
     object-fit:cover;
     border-radius:8px;
+}
+
+.chapter-views {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 #viewer-container {
@@ -210,6 +240,209 @@ header:hover h1, header:active h1 {
     border: 1px solid #111; 
 }
 
+/* ==========================================================================
+   SECCIÓN DE COMENTARIOS
+   ========================================================================== */
+.comments-section {
+    max-width: 800px;
+    margin: 40px auto 60px auto;
+    padding: 20px 15px;
+    background: #0a0a0a;
+    border-top: 2px solid #300000;
+    border-radius: 12px;
+    position: relative;
+}
+
+.comments-section h4 {
+    font-size: 1.4rem;
+    color: #fff;
+    margin-bottom: 20px;
+    border-left: 4px solid #ff0000;
+    padding-left: 10px;
+}
+
+.comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.comment-form input, .comment-form textarea {
+    background: #111;
+    border: 1px solid #300000;
+    color: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: Arial, sans-serif;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.comment-form input:focus, .comment-form textarea:focus {
+    border-color: #ff0000;
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.2);
+}
+
+.comment-form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.comment-submit-btn {
+    align-self: flex-end;
+    background: #111;
+    color: #fff;
+    border: 1px solid #ff0000;
+    padding: 10px 25px;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 6px;
+    transition: all 0.3s;
+}
+
+.comment-submit-btn:hover {
+    background: #ff0000;
+    color: #000;
+    box-shadow: 0 0 15px #ff0000;
+}
+
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.comment-card {
+    background: #111;
+    border: 1px solid #200000;
+    padding: 15px;
+    border-radius: 8px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: opacity 0.3s ease;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.comment-author-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.comment-author {
+    font-weight: bold;
+    color: #ff0000;
+    font-size: 0.95rem;
+}
+
+.badge-autor {
+    background: #ff0000;
+    color: #000;
+    font-weight: bold;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    box-shadow: 0 0 10px #ff0000;
+    letter-spacing: 0.5px;
+}
+
+.comment-text {
+    color: #ddd;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.comment-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    color: #aaa; 
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.action-btn.like-btn:hover {
+    color: #ff3366;
+}
+
+.action-btn.like-btn.liked {
+    color: #ff3366;
+}
+
+.action-btn.delete-btn {
+    color: #aaa;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.action-btn.delete-btn:hover {
+    color: #fff;
+    background: #b30000;
+}
+
+/* ANIMACIONES */
+.floating-emoji {
+    position: absolute;
+    pointer-events: none;
+    z-index: 999;
+    font-size: 1.5rem;
+    animation: flotarEmoji 1s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes flotarEmoji {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1.2);
+        opacity: 0;
+    }
+}
+
+.particle-fx {
+    position: absolute;
+    pointer-events: none;
+    z-index: 999;
+    width: 6px;
+    height: 6px;
+    border-radius: 2px;
+    animation: explotarParticula 0.8s cubic-bezier(0.1, 1, 0.2, 1) forwards;
+}
+
+@keyframes explotarParticula {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--mx), var(--my));
+        opacity: 0;
+    }
+}
+
 .social{
     text-align:center;
     margin:40px 0;
@@ -237,6 +470,9 @@ header:hover h1, header:active h1 {
 
 <header>
     <h1>Thalesis</h1>
+    <div class="global-counter" id="contador-global">
+        <i class="fas fa-users"></i> <span id="num-global">...</span>
+    </div>
 </header>
 
 <div class="section">
@@ -256,7 +492,18 @@ header:hover h1, header:active h1 {
         <button class="viewer-btn" id="btn-close">Volver ✕</button>
         <button class="viewer-btn" id="btn-next">Sig ▶</button>
     </div>
+    
     <div class="viewer-content" id="viewer-content"></div>
+
+    <div class="comments-section" id="seccion-comentarios-root">
+        <h4>Comentarios</h4>
+        <form class="comment-form" id="formulario-comentario">
+            <input type="text" id="comentario-nombre" placeholder="Tu nombre o alias..." required maxlength="30">
+            <textarea id="comentario-texto" placeholder="¿Qué te pareció el capítulo?..." required maxlength="500"></textarea>
+            <button type="submit" class="comment-submit-btn">Comentar</button>
+        </form>
+        <div class="comments-list" id="lista-comentarios"></div>
+    </div>
 </div>
 
 <div class="social">
@@ -268,13 +515,192 @@ header:hover h1, header:active h1 {
     </a>
 </div>
 
-<script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, onValue, runTransaction, push, set, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+  const firebaseConfig = {
+    apiKey: "AIzaSyBSO8Cfuq2t9xvJ_jJMAI-ygpgJ1ezFUHQ",
+    authDomain: "webmanga-7b2cb.firebaseapp.com",
+    databaseURL: "https://webmanga-7b2cb-default-rtdb.firebaseio.com",
+    projectId: "webmanga-7b2cb",
+    storageBucket: "webmanga-7b2cb.firebasestorage.app",
+    messagingSenderId: "956720725778",
+    appId: "1:956720725778:web:ecb504f7c91e220a393dcb",
+    measurementId: "G-6ESEFLWEX2"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+
+  const CLAVE_SECRETA_AUTOR = "thalesis2026"; 
+
+  // --- VISITAS ---
+  window.registrarVisitaInicio = function() {
+      const ahora = Date.now();
+      const ultimoRegistro = localStorage.getItem('cooldown_inicio');
+      if (!ultimoRegistro || (ahora - ultimoRegistro > 600000)) {
+          const refInicio = ref(database, 'contadores/visitas_inicio');
+          runTransaction(refInicio, (actual) => (actual || 0) + 1);
+          localStorage.setItem('cooldown_inicio', ahora);
+      }
+  };
+
+  window.escucharVisitasGlobales = function() {
+      const refInicio = ref(database, 'contadores/visitas_inicio');
+      const elementoGlobal = document.getElementById("num-global");
+      onValue(refInicio, (snapshot) => {
+          elementoGlobal.innerText = snapshot.val() || 0;
+      });
+  };
+
+  window.registrarVisitaCapitulo = function(nombreCap) {
+      const ahora = Date.now();
+      const ultimoRegistro = localStorage.getItem('cooldown_' + nombreCap);
+      if (!ultimoRegistro || (ahora - ultimoRegistro > 600000)) {
+          const refCap = ref(database, 'contadores/capitulo_' + nombreCap);
+          runTransaction(refCap, (actual) => (actual || 0) + 1);
+          localStorage.setItem('cooldown_' + nombreCap, ahora);
+      }
+  };
+
+  window.escucharVisitasCapitulo = function(nombreCap, elementoHtml) {
+      const refCap = ref(database, 'contadores/capitulo_' + nombreCap);
+      onValue(refCap, (snapshot) => {
+          const visitas = snapshot.val() || 0;
+          elementoHtml.innerHTML = `<i class="fas fa-eye"></i> ${visitas} lecturas`;
+      });
+  };
+
+  // --- COMENTARIOS ---
+  let desvincularEscuchaComentarios = null;
+
+  window.cargarComentariosDelCapitulo = function(nombreCap, contenedorHtml) {
+      if (desvincularEscuchaComentarios) desvincularEscuchaComentarios();
+
+      const refComentarios = ref(database, 'comentarios/' + nombreCap);
+      
+      desvincularEscuchaComentarios = onValue(refComentarios, (snapshot) => {
+          contenedorHtml.innerHTML = "";
+          const datos = snapshot.val();
+          
+          if (!datos) {
+              contenedorHtml.innerHTML = `<p style="color:#555; font-size:0.9rem; text-align:center;">Nadie ha comentado aún. ¡Sé el primero!</p>`;
+              return;
+          }
+
+          const listaOrdenada = Object.keys(datos).reverse();
+
+          listaOrdenada.forEach((idComentario) => {
+              const info = datos[idComentario];
+              const card = document.createElement("div");
+              card.className = "comment-card";
+              card.id = "card-" + idComentario;
+              
+              let badgeAutorHtml = "";
+              if (info.esAutor === true) {
+                  badgeAutorHtml = `<span class="badge-autor">Autor</span>`;
+              }
+
+              const yaTieneLike = localStorage.getItem(`liked_${idComentario}`);
+              const claseLiked = yaTieneLike ? "liked" : "";
+              const colorCorazon = yaTieneLike ? '#ff3366' : '#555';
+              
+              card.innerHTML = `
+                  <div class="comment-header">
+                      <div class="comment-author-wrapper">
+                          <span class="comment-author">${escaperHtml(info.autor)}</span>
+                          ${badgeAutorHtml}
+                      </div>
+                      <button class="action-btn delete-btn" data-id="${idComentario}"><i class="fas fa-times"></i> Borrar</button>
+                  </div>
+                  <p class="comment-text">${escaperHtml(info.texto)}</p>
+                  <div class="comment-actions">
+                      <button class="action-btn like-btn ${claseLiked}" data-id="${idComentario}">
+                          <i class="fas fa-heart" style="color: ${colorCorazon}"></i> <span>${info.likes || 0}</span>
+                      </button>
+                  </div>
+              `;
+
+              card.querySelector(".like-btn").addEventListener("click", (e) => {
+                  const haDadoLike = localStorage.getItem(`liked_${idComentario}`);
+                  const refLike = ref(database, `comentarios/${nombreCap}/${idComentario}/likes`);
+                  
+                  if (!haDadoLike) {
+                      localStorage.setItem(`liked_${idComentario}`, 'true');
+                      e.currentTarget.classList.add("liked");
+                      e.currentTarget.querySelector("i").style.color = "#ff3366";
+                      window.crearEfectoLluviaCorazones(e); 
+                      runTransaction(refLike, (actual) => (actual || 0) + 1);
+                  } else {
+                      localStorage.removeItem(`liked_${idComentario}`);
+                      e.currentTarget.classList.remove("liked");
+                      e.currentTarget.querySelector("i").style.color = "#555";
+                      runTransaction(refLike, (actual) => {
+                          let nuevoValor = (actual || 0) - 1;
+                          return nuevoValor < 0 ? 0 : nuevoValor; 
+                      });
+                  }
+              });
+
+              card.querySelector(".delete-btn").addEventListener("click", (e) => {
+                  const confirmar = confirm("¿Seguro que quieres eliminar este comentario?");
+                  if (confirmar) {
+                      window.crearEfectoExplosionComentario(e.currentTarget, card); 
+                      setTimeout(() => {
+                          const refBorrar = ref(database, `comentarios/${nombreCap}/${idComentario}`);
+                          remove(refBorrar);
+                      }, 400);
+                  }
+              });
+
+              contenedorHtml.appendChild(card);
+          });
+      });
+  };
+
+  window.intentarPublicarComentario = function(nombreCap, autor, texto) {
+      let esAutorReal = false;
+
+      if (autor.trim() === "Raylin AC") {
+          // NUEVO: Revisa si este navegador ya guardó el estado de sesión autorizada
+          const yaLogueado = localStorage.getItem("autor_autenticado");
+
+          if (yaLogueado === "true") {
+              esAutorReal = true;
+          } else {
+              // Si es la primera vez en este equipo, pide la clave
+              const pass = prompt("Para comentar como Creador, introduce tu contraseña de seguridad:");
+              if (pass === CLAVE_SECRETA_AUTOR) {
+                  esAutorReal = true;
+                  localStorage.setItem("autor_autenticado", "true"); // Guarda el acceso para siempre
+              } else {
+                  alert("Contraseña incorrecta. No puedes comentar usando el nombre del Creador.");
+                  return; 
+              }
+          }
+      }
+
+      const refComentarios = ref(database, 'comentarios/' + nombreCap);
+      const nuevoComentarioRef = push(refComentarios);
+      set(nuevoComentarioRef, {
+          autor: autor,
+          texto: texto,
+          likes: 0,
+          esAutor: esAutorReal, 
+          fecha: Date.now()
+      });
+  };
+
+  function escaperHtml(texto) {
+      return texto.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  }
+</script>
+
+<script>
 const usuario = "railinc035-gif";
 const repo = "Mizuvichi";
-
-const api =
-`https://api.github.com/repos/${usuario}/${repo}/contents`;
+const api = `https://api.github.com/repos/${usuario}/${repo}/contents`;
 
 let listaCapitulosGuardados = [];
 let indiceCapituloActual = -1;
@@ -290,22 +716,85 @@ function formatearNombreCapitulo(nombreCarpeta) {
     return nombreCarpeta.replace("Cap_", "Capítulo ");
 }
 
+window.crearEfectoLluviaCorazones = function(e) {
+    const emojis = ['❤️', '✨', '🔥', '💖'];
+    const cantidad = 12; 
+    const rootSeccion = document.getElementById("seccion-comentarios-root");
+    
+    const boundsRoot = rootSeccion.getBoundingClientRect();
+    const boundsBtn = e.currentTarget.getBoundingClientRect();
+    
+    const xOriginal = boundsBtn.left - boundsRoot.left + boundsBtn.width / 2;
+    const yOriginal = boundsBtn.top - boundsRoot.top + boundsBtn.height / 2;
+
+    for (let i = 0; i < cantidad; i++) {
+        const span = document.createElement('span');
+        span.className = 'floating-emoji';
+        span.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        
+        span.style.left = `${xOriginal}px`;
+        span.style.top = `${yOriginal}px`;
+
+        const angulo = (Math.random() * 120 + 30) * (Math.PI / 180); 
+        const velocidad = Math.random() * 100 + 50;
+        
+        const xDestino = Math.cos(angulo) * velocidad * (Math.random() > 0.5 ? 1 : -1);
+        const yDestino = -Math.sin(angulo) * velocidad - 30; 
+
+        span.style.setProperty('--x', `${xDestino}px`);
+        span.style.setProperty('--y', `${yDestino}px`);
+
+        rootSeccion.appendChild(span);
+        span.addEventListener('animationend', () => span.remove());
+    }
+};
+
+window.crearEfectoExplosionComentario = function(botonClicado, elementoCard) {
+    const rootSeccion = document.getElementById("seccion-comentarios-root");
+    const boundsRoot = rootSeccion.getBoundingClientRect();
+    const boundsBtn = botonClicado.getBoundingClientRect();
+    const cantidadParticulas = 40;
+    const colores = ['#ff0000', '#b30000', '#300000', '#555555', '#222222'];
+
+    elementoCard.style.opacity = '0';
+
+    const xCentro = boundsBtn.left - boundsRoot.left + boundsBtn.width / 2;
+    const yCentro = boundsBtn.top - boundsRoot.top + boundsBtn.height / 2;
+
+    for (let i = 0; i < cantidadParticulas; i++) {
+        const particula = document.createElement('div');
+        particula.className = 'particle-fx';
+        
+        particula.style.left = `${xCentro}px`;
+        particula.style.top = `${yCentro}px`;
+        particula.style.background = colores[Math.floor(Math.random() * colores.length)];
+        
+        if(particula.style.background.includes('255') || particula.style.background.includes('b3')) {
+            particula.style.boxShadow = `0 0 8px ${particula.style.background}`;
+        }
+
+        const mx = (Math.random() - 0.5) * 250; 
+        const my = (Math.random() * 150) - 50;  
+
+        particula.style.setProperty('--mx', `${mx}px`);
+        particula.style.setProperty('--my', `${my}px`);
+
+        rootSeccion.appendChild(particula);
+        particula.addEventListener('animationend', () => particula.remove());
+    }
+};
+
 async function cargarAvisos() {
     const contenedorAvisos = document.getElementById("aviso-container");
-    
     try {
         const respuesta = await fetch(`${api}/Aviso`);
-        
         if (!respuesta.ok) {
             contenedorAvisos.parentElement.style.display = "none";
             return;
         }
-
         const archivos = await respuesta.json();
-        
         const pngs = archivos
             .filter(p => p.name.toLowerCase().endsWith(".png"))
-            // MODIFICADO: Cambiado el orden b.name.localeCompare(a.name) para que el número más alto salga primero
             .sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true}));
 
         if (pngs.length === 0) {
@@ -313,27 +802,21 @@ async function cargarAvisos() {
             return;
         }
 
-        // MODIFICADO: Lógica para envolver las imágenes y clavar la etiqueta verde al primer elemento
         pngs.forEach((img, index) => {
             const wrapper = document.createElement("div");
             wrapper.className = "aviso-wrapper";
-
-            // Si es el primer elemento (el más reciente), le mete el tag verde de "NUEVO"
             if (index === 0) {
                 const tag = document.createElement("span");
                 tag.className = "badge-nuevo";
                 tag.innerText = "Nuevo";
                 wrapper.appendChild(tag);
             }
-
             const imageElement = document.createElement("img");
             imageElement.src = img.download_url;
             imageElement.alt = "Aviso Informativo";
-            
             wrapper.appendChild(imageElement);
             contenedorAvisos.appendChild(wrapper);
         });
-
     } catch (error) {
         console.error("Error cargando los avisos:", error);
         contenedorAvisos.parentElement.style.display = "none";
@@ -341,91 +824,62 @@ async function cargarAvisos() {
 }
 
 async function cargarCapitulos(){
+    const contenedor = document.getElementById("chapters");
+    try {
+        const respuesta = await fetch(api);
+        const archivos = await respuesta.json();
+        const capitulos = archivos.filter(item => item.type === "dir" && item.name.startsWith("Cap_"));
+        
+        capitulos.sort((a,b)=> b.name.localeCompare(a.name));
 
-    const contenedor =
-    document.getElementById("chapters");
+        for(const cap of capitulos){
+            const capApi = `${api}/${cap.name}`;
+            const capResp = await fetch(capApi);
+            const paginas = await capResp.json();
+            const pngs = paginas
+                .filter(p => p.name.toLowerCase().endsWith(".png"))
+                .sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
 
-    const respuesta =
-    await fetch(api);
+            if(pngs.length === 0) continue;
 
-    const archivos =
-    await respuesta.json();
+            listaCapitulosGuardados.push({
+                name: cap.name,
+                images: pngs
+            });
 
-    const capitulos =
-    archivos.filter(
-        item =>
-        item.type === "dir" &&
-        item.name.startsWith("Cap_")
-    );
+            const miniatura = pngs[0].download_url;
+            const card = document.createElement("div");
+            card.className = "chapter";
 
-    capitulos.sort((a,b)=>
-        b.name.localeCompare(a.name)
-    );
-
-    for(const cap of capitulos){
-
-        const capApi =
-        `${api}/${cap.name}`;
-
-        const capResp =
-        await fetch(capApi);
-
-        const paginas =
-        await capResp.json();
-
-        const pngs =
-        paginas
-        .filter(
-            p =>
-            p.name.toLowerCase().endsWith(".png")
-        )
-        .sort((a,b)=>
-            a.name.localeCompare(
-                b.name,
-                undefined,
-                {numeric:true}
-            )
-        );
-
-        if(pngs.length === 0) continue;
-
-        listaCapitulosGuardados.push({
-            name: cap.name,
-            images: pngs
-        });
-
-        const miniatura =
-        pngs[0].download_url;
-
-        const card =
-        document.createElement("div");
-
-        card.className = "chapter";
-
-        let html = `
-        <div class="chapter-header">
-            <div class="chapter-left">
-                <img class="chapter-thumb"
-                src="${miniatura}">
-                <div>
-                    <h3>${formatearNombreCapitulo(cap.name)}</h3>
+            let html = `
+            <div class="chapter-header">
+                <div class="chapter-left">
+                    <img class="chapter-thumb" src="${miniatura}">
+                    <div>
+                        <h3>${formatearNombreCapitulo(cap.name)}</h3>
+                        <div class="chapter-views" id="views-${cap.name}">Cargando lecturas...</div>
+                    </div>
                 </div>
+                <div>▶</div>
             </div>
-            <div>▶</div>
-        </div>
-        `;
+            `;
+            card.innerHTML = html;
 
-        card.innerHTML = html;
+            const header = card.querySelector(".chapter-header");
+            header.addEventListener("click",()=>{
+                const index = listaCapitulosGuardados.findIndex(c => c.name === cap.name);
+                abrirVisor(index);
+            });
 
-        const header =
-        card.querySelector(".chapter-header");
+            contenedor.appendChild(card);
 
-        header.addEventListener("click",()=>{
-            const index = listaCapitulosGuardados.findIndex(c => c.name === cap.name);
-            abrirVisor(index);
-        });
-
-        contenedor.appendChild(card);
+            const elementoVistas = card.querySelector(`#views-${cap.name}`);
+            if (window.escucharVisitasCapitulo) {
+                window.escucharVisitasCapitulo(cap.name, elementoVistas);
+            }
+        }
+    } catch (error) {
+        console.error("Error cargando capítulos:", error);
     }
 }
 
@@ -452,7 +906,29 @@ function abrirVisor(index) {
     document.getElementById("viewer-container").style.display = "block";
     document.getElementById("viewer-container").scrollTop = 0;
     document.body.style.overflow = "hidden";
+
+    if (window.registrarVisitaCapitulo) {
+        window.registrarVisitaCapitulo(capitulo.name);
+    }
+
+    const listaHtml = document.getElementById("lista-comentarios");
+    if (window.cargarComentariosDelCapitulo) {
+        window.cargarComentariosDelCapitulo(capitulo.name, listaHtml);
+    }
 }
+
+document.getElementById("formulario-comentario").addEventListener("submit", (e) => {
+    e.preventDefault();
+    
+    const capituloActual = listaCapitulosGuardados[indiceCapituloActual];
+    const inputNombre = document.getElementById("comentario-nombre");
+    const inputTexto = document.getElementById("comentario-texto");
+
+    if (window.intentarPublicarComentario && capituloActual) {
+        window.intentarPublicarComentario(capituloActual.name, inputNombre.value, inputTexto.value);
+        inputTexto.value = "";
+    }
+});
 
 function cerrarVisor() {
     document.getElementById("viewer-container").style.display = "none";
@@ -475,7 +951,6 @@ const visorContainer = document.getElementById("viewer-container");
 
 visorContainer.addEventListener("scroll", () => {
     let scrollActual = visorContainer.scrollTop;
-
     if (scrollActual > ultimoScroll && scrollActual > 50) {
         barraNav.classList.add("hidden"); 
     } else {
@@ -484,9 +959,16 @@ visorContainer.addEventListener("scroll", () => {
     ultimoScroll = scrollActual;
 });
 
-cargarAvisos();
-cargarCapitulos();
-
+window.addEventListener("DOMContentLoaded", () => {
+    if (window.registrarVisitaInicio) {
+        window.registrarVisitaInicio();
+    }
+    if (window.escucharVisitasGlobales) {
+        window.escucharVisitasGlobales();
+    }
+    cargarAvisos();
+    cargarCapitulos();
+});
 </script>
 
 </body>
