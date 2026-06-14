@@ -285,6 +285,13 @@ header:hover .global-counter, header:active .global-counter {
     box-shadow: 0 0 8px rgba(255, 0, 0, 0.2);
 }
 
+.comment-form input:disabled {
+    background: #151515;
+    border-color: #222;
+    color: #888;
+    cursor: not-allowed;
+}
+
 .comment-form textarea {
     resize: vertical;
     min-height: 80px;
@@ -344,6 +351,11 @@ header:hover .global-counter, header:active .global-counter {
     font-size: 0.95rem;
 }
 
+.comment-date {
+    font-size: 0.8rem;
+    color: #666;
+}
+
 .badge-autor {
     background: #ff0000;
     color: #000;
@@ -392,6 +404,7 @@ header:hover .global-counter, header:active .global-counter {
 }
 
 .action-btn.delete-btn {
+    display: none; 
     color: #aaa;
     padding: 4px 8px;
     border-radius: 4px;
@@ -400,6 +413,10 @@ header:hover .global-counter, header:active .global-counter {
 .action-btn.delete-btn:hover {
     color: #fff;
     background: #b30000;
+}
+
+.comment-card.es-mio .action-btn.delete-btn {
+    display: inline-flex; 
 }
 
 /* ANIMACIONES */
@@ -572,10 +589,47 @@ header:hover .global-counter, header:active .global-counter {
       });
   };
 
+  window.calcularTiempoRelativo = function(timestamp) {
+      if (!timestamp) return "Hace un momento";
+      const ahora = Date.now();
+      const diferencia = ahora - timestamp;
+
+      const segundos = Math.floor(diferencia / 1000);
+      const minutos = Math.floor(segundos / 60);
+      const horas = Math.floor(minutos / 60);
+      const dias = Math.floor(horas / 24);
+
+      if (segundos < 60) return "Hace un momento";
+      if (minutos < 60) return `Hace ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}`;
+      if (horas < 24) return `Hace ${horas} ${horas === 1 ? 'hora' : 'horas'}`;
+      if (dias === 1) return "Ayer";
+      if (dias < 7) return `Hace ${dias} días`;
+      
+      const fechaObj = new Date(timestamp);
+      return fechaObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
+  // --- NUEVA FUNCIÓN: Controlar bloqueo de la caja de nombres ---
+  window.verificarYBloquearNombre = function() {
+      const inputNombre = document.getElementById("comentario-nombre");
+      if (!inputNombre) return;
+
+      const nombreGuardado = localStorage.getItem("mi_nombre_fijo");
+      const soyElAutorLogueado = localStorage.getItem("autor_autenticado") === "true";
+
+      if (soyElAutorLogueado) {
+          inputNombre.value = "Raylin AC";
+          inputNombre.disabled = true;
+      } else if (nombreGuardado) {
+          inputNombre.value = nombreGuardado;
+          inputNombre.disabled = true; 
+      }
+  };
+
   // --- COMENTARIOS ---
   let desvincularEscuchaComentarios = null;
 
-  window.cargarComentariosDelCapitulo = function(nombreCap, contenedorHtml) {
+  window.cargarComentariosDelCapitulo = function(nombreCap, contenedorHtml, scrollAlFinal = false) {
       if (desvincularEscuchaComentarios) desvincularEscuchaComentarios();
 
       const refComentarios = ref(database, 'comentarios/' + nombreCap);
@@ -591,17 +645,42 @@ header:hover .global-counter, header:active .global-counter {
 
           const listaOrdenada = Object.keys(datos).reverse();
 
+          let misComentariosGuardados = [];
+          try {
+              misComentariosGuardados = JSON.parse(localStorage.getItem("mis_comentarios_v3") || "[]");
+          } catch(e) { misComentariosGuardados = []; }
+
+          const soyElAutorLogueado = localStorage.getItem("autor_autenticado") === "true";
+          const nombreLocalFijo = localStorage.getItem("mi_nombre_fijo");
+
           listaOrdenada.forEach((idComentario) => {
               const info = datos[idComentario];
               const card = document.createElement("div");
               card.className = "comment-card";
               card.id = "card-" + idComentario;
               
+              // REGLA DEFINITIVA Y EXTREMADAMENTE SEGURA CONTRA BUGS:
+              let esMiComentarioReal = false;
+
+              if (info.esAutor === true) {
+                  if (soyElAutorLogueado) esMiComentarioReal = true;
+              } else {
+                  // Eres el dueño si el ID está en tu historial local Y tu alias fijo coincide con el del mensaje
+                  if (misComentariosGuardados.includes(idComentario) && nombreLocalFijo === info.autor) {
+                      esMiComentarioReal = true;
+                  }
+              }
+
+              if (esMiComentarioReal) {
+                  card.classList.add("es-mio");
+              }
+
               let badgeAutorHtml = "";
               if (info.esAutor === true) {
                   badgeAutorHtml = `<span class="badge-autor">Autor</span>`;
               }
 
+              const textoFecha = window.calcularTiempoRelativo(info.fecha);
               const yaTieneLike = localStorage.getItem(`liked_${idComentario}`);
               const claseLiked = yaTieneLike ? "liked" : "";
               const colorCorazon = yaTieneLike ? '#ff3366' : '#555';
@@ -611,6 +690,7 @@ header:hover .global-counter, header:active .global-counter {
                       <div class="comment-author-wrapper">
                           <span class="comment-author">${escaperHtml(info.autor)}</span>
                           ${badgeAutorHtml}
+                          <span class="comment-date">${textoFecha}</span>
                       </div>
                       <button class="action-btn delete-btn" data-id="${idComentario}"><i class="fas fa-times"></i> Borrar</button>
                   </div>
@@ -644,7 +724,7 @@ header:hover .global-counter, header:active .global-counter {
               });
 
               card.querySelector(".delete-btn").addEventListener("click", (e) => {
-                  const confirmar = confirm("¿Seguro que quieres eliminar este comentario?");
+                  const confirmar = confirm("¿Seguro que quieres eliminar tu comentario?");
                   if (confirmar) {
                       window.crearEfectoExplosionComentario(e.currentTarget, card); 
                       setTimeout(() => {
@@ -656,39 +736,64 @@ header:hover .global-counter, header:active .global-counter {
 
               contenedorHtml.appendChild(card);
           });
+
+          if (scrollAlFinal) {
+              setTimeout(() => {
+                  const seccionComentarios = document.getElementById("seccion-comentarios-root");
+                  if (seccionComentarios) {
+                      seccionComentarios.scrollIntoView({ behavior: "smooth" });
+                  }
+              }, 300);
+          }
       });
   };
 
   window.intentarPublicarComentario = function(nombreCap, autor, texto) {
       let esAutorReal = false;
+      const nombreLimpio = autor.trim();
 
-      if (autor.trim() === "Raylin AC") {
-          // NUEVO: Revisa si este navegador ya guardó el estado de sesión autorizada
+      if (nombreLimpio === "Raylin AC") {
           const yaLogueado = localStorage.getItem("autor_autenticado");
 
           if (yaLogueado === "true") {
               esAutorReal = true;
           } else {
-              // Si es la primera vez en este equipo, pide la clave
               const pass = prompt("Para comentar como Creador, introduce tu contraseña de seguridad:");
               if (pass === CLAVE_SECRETA_AUTOR) {
                   esAutorReal = true;
-                  localStorage.setItem("autor_autenticado", "true"); // Guarda el acceso para siempre
+                  localStorage.setItem("autor_autenticado", "true"); 
+                  window.verificarYBloquearNombre(); 
               } else {
                   alert("Contraseña incorrecta. No puedes comentar usando el nombre del Creador.");
                   return; 
               }
           }
+      } else {
+          // Si es un lector normal y no se ha guardado su nombre, lo congelamos ahora mismo
+          if (!localStorage.getItem("mi_nombre_fijo")) {
+              localStorage.setItem("mi_nombre_fijo", nombreLimpio);
+              window.verificarYBloquearNombre();
+          }
       }
 
       const refComentarios = ref(database, 'comentarios/' + nombreCap);
       const nuevoComentarioRef = push(refComentarios);
+      const idNuevoComentario = nuevoComentarioRef.key;
+
       set(nuevoComentarioRef, {
-          autor: autor,
+          autor: esAutorReal ? "Raylin AC" : localStorage.getItem("mi_nombre_fijo"),
           texto: texto,
           likes: 0,
           esAutor: esAutorReal, 
           fecha: Date.now()
+      }).then(() => {
+          let misComentarios = [];
+          try {
+              misComentarios = JSON.parse(localStorage.getItem("mis_comentarios_v3") || "[]");
+          } catch(e) { misComentarios = []; }
+          
+          misComentarios.push(idNuevoComentario);
+          localStorage.setItem("mis_comentarios_v3", JSON.stringify(misComentarios));
       });
   };
 
@@ -878,16 +983,32 @@ async function cargarCapitulos(){
                 window.escucharVisitasCapitulo(cap.name, elementoVistas);
             }
         }
+
+        verificarHashRuta();
+
     } catch (error) {
         console.error("Error cargando capítulos:", error);
     }
 }
 
-function abrirVisor(index) {
+function verificarHashRuta() {
+    const hash = window.location.hash;
+    if (hash && hash.startsWith("#capitulo=")) {
+        const nombreCap = hash.replace("#capitulo=", "");
+        const index = listaCapitulosGuardados.findIndex(c => c.name === nombreCap);
+        if (index !== -1) {
+            abrirVisor(index, true); 
+        }
+    }
+}
+
+function abrirVisor(index, scrollAComentarios = false) {
     if (index < 0 || index >= listaCapitulosGuardados.length) return;
     
     indiceCapituloActual = index;
     const capitulo = listaCapitulosGuardados[indiceCapituloActual];
+    
+    window.location.hash = `capitulo=${capitulo.name}`;
     
     document.getElementById("viewer-title").innerText = formatearNombreCapitulo(capitulo.name);
     
@@ -904,8 +1025,16 @@ function abrirVisor(index) {
     document.getElementById("btn-next").disabled = indiceCapituloActual === 0;
     
     document.getElementById("viewer-container").style.display = "block";
-    document.getElementById("viewer-container").scrollTop = 0;
+    
+    if (!scrollAComentarios) {
+        document.getElementById("viewer-container").scrollTop = 0;
+    }
     document.body.style.overflow = "hidden";
+
+    // NUEVO: Bloquear el input de nombre al abrir la vista si ya existe registro
+    if (window.verificarYBloquearNombre) {
+        window.verificarYBloquearNombre();
+    }
 
     if (window.registrarVisitaCapitulo) {
         window.registrarVisitaCapitulo(capitulo.name);
@@ -913,7 +1042,7 @@ function abrirVisor(index) {
 
     const listaHtml = document.getElementById("lista-comentarios");
     if (window.cargarComentariosDelCapitulo) {
-        window.cargarComentariosDelCapitulo(capitulo.name, listaHtml);
+        window.cargarComentariosDelCapitulo(capitulo.name, listaHtml, scrollAComentarios);
     }
 }
 
@@ -933,6 +1062,7 @@ document.getElementById("formulario-comentario").addEventListener("submit", (e) 
 function cerrarVisor() {
     document.getElementById("viewer-container").style.display = "none";
     document.body.style.overflow = "auto";
+    history.pushState("", document.title, window.location.pathname + window.location.search);
 }
 
 document.getElementById("btn-close").addEventListener("click", cerrarVisor);
