@@ -1245,22 +1245,20 @@ onValue(estadoConexion, (snapshot) => {
     }
 });
 
-// --- SISTEMA DE PRESENCIA A PRUEBA DE TODO ---
-const conexionEstadoRef = ref(database, '.info/connected');
-const usuariosActivosRef = ref(database, 'usuarios_activos');
-const contadorElemento = document.getElementById('user-count');
+// --- SISTEMA DE PRESENCIA FORZADO ---
+const miConexion = push(ref(database, 'usuarios_activos'));
 
-onValue(conexionEstadoRef, (snapshot) => {
-    if (snapshot.val() === false) return;
+onDisconnect(miConexion).remove();
+set(miConexion, true);
 
-    // Creamos una entrada única para esta pestaña específica
-    const miConexion = push(usuariosActivosRef);
-
-    // Cuando se cierre la pestaña, se borra esta entrada específica
-    onDisconnect(miConexion).remove().then(() => {
-        // Marcamos que esta pestaña está conectada
-        set(miConexion, true);
-    });
+onValue(ref(database, 'usuarios_activos'), (snapshot) => {
+    const contador = document.getElementById('user-count');
+    if (contador) {
+        // Obtenemos el número real de hijos en la carpeta
+        const total = snapshot.exists() ? snapshot.size : 1;
+        contador.innerText = total;
+        console.log("Usuarios activos detectados:", total); // <--- ESTO ES LA CLAVE
+    }
 });
 
 // Escuchamos cuántas entradas únicas existen en total
