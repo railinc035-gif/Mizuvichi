@@ -83,7 +83,11 @@ header:hover .global-counter, header:active .global-counter {
     transition: all 0.4s ease;
 }
 
-
+/* Solo afecta a los avisos para que se queden fijos y sin luz */
+.info-box:hover, .info-box:active {
+    border-color: #300000; /* Color oscuro fijo */
+    box-shadow: none;      /* Sin luz */
+}
 
 .aviso-wrapper {
     position: relative; 
