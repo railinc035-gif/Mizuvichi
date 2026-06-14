@@ -101,15 +101,18 @@ header:hover .global-counter, header:active .global-counter {
     display: block;
     border-radius: 8px;
 }
-
-.aviso-wrapper:not(:last-child) {
-    margin-bottom: 100px; 
+.aviso-wrapper {
+    position: relative; /* Esto es vital: convierte al contenedor en el "ancla" */
+    width: 90%;
+    max-width: 340px;
+    margin: 0 auto;
+    display: block;
 }
 
 .badge-nuevo {
-    position: absolute;
-    top: 12px;
-    left: 12px;
+    position: absolute; /* Ahora se posicionará dentro del wrapper, no de toda la página */
+    top: 10px;
+    left: 10px;
     background: #00ff66;
     color: #000;
     font-weight: bold;
@@ -120,6 +123,7 @@ header:hover .global-counter, header:active .global-counter {
     box-shadow: 0 0 15px #00ff66; 
     z-index: 10;
     letter-spacing: 1px;
+    cursor: pointer;
 }
 
 .chapter{
