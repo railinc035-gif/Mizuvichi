@@ -74,19 +74,18 @@ header:hover .global-counter, header:active .global-counter {
     margin:25px auto;
 }
 
-.info-box{
-    border:2px solid #300000; 
-    border-radius:12px;
-    overflow:hidden;
+.info-box {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
     background: #050505;
     padding: 10px;
     transition: all 0.4s ease;
 }
 
-/* Solo afecta a los avisos para que se queden fijos y sin luz */
 .info-box:hover, .info-box:active {
-    border-color: #300000; /* Color oscuro fijo */
-    box-shadow: none;      /* Sin luz */
+    border-color: transparent;
+    box-shadow: none;
 }
 
 .aviso-wrapper {
