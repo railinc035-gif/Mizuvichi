@@ -1245,13 +1245,41 @@ onValue(estadoConexion, (snapshot) => {
     }
 });
 
-// Escuchamos en tiempo real cuántas pestañas hay abiertas en tu web
-onValue(referenciasVivo, (snapshot) => {
-    const totalActivos = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
-    const campoContador = document.getElementById('user-count');
-    if (campoContador) {
-        // Si da 0 por error, dejamos 1 que eres tú mismo navegando la web
-        campoContador.innerText = totalActivos > 0 ? totalActivos : 1;
+// --- SISTEMA DE PRESENCIA POR DISPOSITIVO ÚNICO ---
+
+// 1. Revisamos si este dispositivo ya tiene un ID guardado en su memoria
+let dispositivoID = localStorage.getItem('manga_dispositivo_id');
+
+// 2. Si es la primera vez que entra desde este teléfono/PC, le inventamos un ID único
+if (!dispositivoID) {
+    dispositivoID = 'lector_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
+    localStorage.setItem('manga_dispositivo_id', dispositivoID);
+}
+
+// 3. Referencias en Firebase para conectar este dispositivo
+const conexionEstadoRef = ref(database, '.info/connected');
+const miPresenciaRef = ref(database, 'usuarios_activos/' + dispositivoID);
+const conteoActivosRef = ref(database, 'usuarios_activos');
+const contadorElemento = document.getElementById('en-vivo-contador');
+
+// 4. Lógica de conexión en tiempo real
+onValue(conexionEstadoRef, (snapshot) => {
+    if (snapshot.val() === false) return;
+
+    // Cuando el usuario cierre la pestaña o bloquee el cel, Firebase borra SU dispositivoID
+    onDisconnect(miPresenciaRef).remove().then(() => {
+        // Mientras esté conectado, dice que este ID está "online"
+        set(miPresenciaRef, true);
+    });
+});
+
+// 5. Contamos cuántos IDs únicos hay metidos en la carpeta 'usuarios_activos'
+onValue(conteoActivosRef, (snapshot) => {
+    if (snapshot.exists()) {
+        const totalDispositivos = Object.keys(snapshot.val()).length;
+        contadorElemento.textContent = totalDispositivos;
+    } else {
+        contadorElemento.textContent = "1"; // Por si acaso el creador está solo
     }
 });
 // ==========================================
