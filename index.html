@@ -1245,34 +1245,31 @@ onValue(estadoConexion, (snapshot) => {
     }
 });
 
-// --- SISTEMA DE PRESENCIA POR DISPOSITIVO ÚNICO ---
-
-// 1. Revisamos si este dispositivo ya tiene un ID guardado en su memoria
-let dispositivoID = localStorage.getItem('manga_dispositivo_id');
-
-// 2. Si es la primera vez que entra desde este teléfono/PC, le inventamos un ID único
-if (!dispositivoID) {
-    dispositivoID = 'lector_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
-    localStorage.setItem('manga_dispositivo_id', dispositivoID);
-}
-
-// 3. Referencias en Firebase para conectar este dispositivo
+// --- SISTEMA DE PRESENCIA A PRUEBA DE TODO ---
 const conexionEstadoRef = ref(database, '.info/connected');
-const miPresenciaRef = ref(database, 'usuarios_activos/' + dispositivoID);
-const conteoActivosRef = ref(database, 'usuarios_activos');
-const contadorElemento = document.getElementById('en-vivo-contador');
+const usuariosActivosRef = ref(database, 'usuarios_activos');
+const contadorElemento = document.getElementById('user-count');
 
-// 4. Lógica de conexión en tiempo real
 onValue(conexionEstadoRef, (snapshot) => {
     if (snapshot.val() === false) return;
 
-    // Cuando el usuario cierre la pestaña o bloquee el cel, Firebase borra SU dispositivoID
-    onDisconnect(miPresenciaRef).remove().then(() => {
-        // Mientras esté conectado, dice que este ID está "online"
-        set(miPresenciaRef, true);
+    // Creamos una entrada única para esta pestaña específica
+    const miConexion = push(usuariosActivosRef);
+
+    // Cuando se cierre la pestaña, se borra esta entrada específica
+    onDisconnect(miConexion).remove().then(() => {
+        // Marcamos que esta pestaña está conectada
+        set(miConexion, true);
     });
 });
 
+// Escuchamos cuántas entradas únicas existen en total
+onValue(usuariosActivosRef, (snapshot) => {
+    if (contadorElemento) {
+        const total = snapshot.exists() ? snapshot.size : 1;
+        contadorElemento.innerText = total;
+    }
+});
 // 5. Contamos cuántos IDs únicos hay metidos en la carpeta 'usuarios_activos'
 onValue(conteoActivosRef, (snapshot) => {
     if (snapshot.exists()) {
