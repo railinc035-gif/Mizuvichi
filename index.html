@@ -488,10 +488,96 @@ header:hover .global-counter, header:active .global-counter {
 
 <header>
     <h1>Thalesis</h1>
-    <div class="global-counter" id="contador-global">
-        <i class="fas fa-users"></i> <span id="num-global">...</span>
+<style>
+    /* Esto alinea el título arriba y crea la fila para los contadores abajo */
+    header {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* Caja contenedora que empuja uno a la izquierda y otro a la derecha */
+    .counters-row {
+        display: flex;
+        justify-content: space-between; /* Empuja a los extremos */
+        align-items: center;
+        width: 100%;
+        padding: 0 5px;
+    }
+
+    /* Diseño del contador en vivo (Izquierda) */
+    .online-counter-container {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.08);
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 13px;
+        font-weight: bold;
+    }
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #2ecc71;
+        border-radius: 50%;
+        position: relative;
+    }
+    .status-dot::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-color: #2ecc71;
+        border-radius: 50%;
+        animation: pulse-green 2s infinite;
+    }
+    @keyframes pulse-green {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(2.5); opacity: 0; }
+    }
+    .online-counter-container svg {
+        width: 14px;
+        height: 14px;
+        fill: #2ecc71;
+    }
+    .counter-text {
+        color: #888888;
+    }
+    #user-count {
+        color: #2ecc71;
+    }
+
+    /* Estilos para tu otro contador de visitas (Derecha) */
+    .global-counter {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 13px;
+        font-weight: bold;
+        color: #888888; /* Color gris para combinar */
+    }
+</style>
+
+<div class="counters-row">
+    
+    <div class="online-counter-container" title="Lectores activos ahora mismo">
+        <div class="status-dot"></div>
+        <svg viewBox="0 0 24 24">
+            <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+        </svg>
+        <span class="counter-text"><span id="user-count">1</span> activos</span>
     </div>
-</header>
+
+    <div class="global-counter" id="contador-global">
+        <i class="fas fa-users"></i> Visitas: <span id="num-global">...</span>
+    </div>
+
+</div> 
+ 
+ </header>
 
 <div class="section">
     <h2> </h2>
@@ -565,7 +651,8 @@ header:hover .global-counter, header:active .global-counter {
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getDatabase, ref, onValue, runTransaction, push, set, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+ import { getDatabase, ref, onValue, runTransaction, push, set, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
 
   const firebaseConfig = {
     apiKey: "AIzaSyBSO8Cfuq2t9xvJ_jJMAI-ygpgJ1ezFUHQ",
@@ -1129,7 +1216,45 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     cargarAvisos();
     cargarCapitulos();
+
+// Fuerza a la página a recargarse si el usuario regresa de PayPal
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted) {
+            window.location.reload();
+        }
+    });
+
 });
+
+// ==========================================
+// LÓGICA DE LECTORES EN VIVO (ESQUINA IZQUIERDA)
+// ==========================================
+const referenciasVivo = ref(database, 'lectores_activos');
+const estadoConexion = ref(database, '.info/connected');
+
+onValue(estadoConexion, (snapshot) => {
+    if (snapshot.val() === true) {
+        // Creamos un registro único para esta pestaña abierta
+        const miCeldaConexion = push(referenciasVivo);
+
+        // Si el lector cierra la pestaña, se borra automáticamente de la base de datos
+        onDisconnect(miCeldaConexion).remove();
+
+        // Sumamos al usuario actual
+        set(miCeldaConexion, true);
+    }
+});
+
+// Escuchamos en tiempo real cuántas pestañas hay abiertas en tu web
+onValue(referenciasVivo, (snapshot) => {
+    const totalActivos = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+    const campoContador = document.getElementById('user-count');
+    if (campoContador) {
+        // Si da 0 por error, dejamos 1 que eres tú mismo navegando la web
+        campoContador.innerText = totalActivos > 0 ? totalActivos : 1;
+    }
+});
+// ==========================================
 </script>
 
 </body>
