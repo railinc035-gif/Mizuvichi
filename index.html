@@ -47,12 +47,14 @@ header:hover h1, header:active h1 {
                 0 0 40px #b30000;
 }
 
-.global-counter {
+.counters-wrapper {
     position: absolute;
     top: 15px;
     right: 20px;
+}
+
+.global-counter {
     font-size: 0.9rem;
-    color: #666;
     background: #0a0a0a;
     padding: 6px 12px;
     border-radius: 20px;
@@ -61,11 +63,42 @@ header:hover h1, header:active h1 {
     align-items: center;
     gap: 6px;
     transition: all 0.3s ease;
+    color: #666;
 }
+
+.online-counter {
+    position: absolute;
+    bottom: 10px;
+    left: 20px;
+    font-size: 0.75rem;
+    background: rgba(0, 255, 102, 0.05);
+    padding: 4px 10px;
+    border-radius: 30px;
+    border: 1px solid rgba(0, 255, 102, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #00ff66;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
 header:hover .global-counter, header:active .global-counter {
     color: #ff0000;
     border-color: #ff0000;
     box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
+}
+
+header:hover .online-counter, header:active .online-counter {
+    border-color: #00ff66;
+    background: rgba(0, 255, 102, 0.1);
+    box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
 }
 
 .section{
@@ -89,29 +122,29 @@ header:hover .global-counter, header:active .global-counter {
 }
 
 .aviso-wrapper {
-    position: relative; 
+    position: relative;
     width: 100%;
-    display: block;
+    max-width: 800px;
+    margin: 0 auto 70px auto; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
- .info-box img {
-    width: 100%;        /* La imagen intentará ocupar el espacio disponible */
-    max-width: 390px;   /* ESTO ES LO QUE HACE QUE NO SE VEAN GIGANTES */
-    margin: 0 auto;     /* Esto mantiene la imagen centrada */
+.info-box img {
+    width: 100%;
+    max-width: 390px;
+    margin: 0 auto;
     display: block;
     border-radius: 8px;
+    image-rendering: -webkit-optimize-contrast;
+    backface-visibility: hidden;
+    transform: translateZ(0);
 }
-.aviso-wrapper {
-    position: relative;
-    width: 90%;
-    max-width: 800px; /* <--- Aumenta esto a 800px o 900px */
-    margin: 0 auto 70px auto; 
-    display: block;
-}
+
 .badge-nuevo {
-    position: absolute; /* Ahora se posicionará dentro del wrapper, no de toda la página */
-    top: 10px;
-    left: 10px;
+    align-self: flex-start;
+    margin-bottom: 5px;
     background: #00ff66;
     color: #000;
     font-weight: bold;
@@ -119,10 +152,42 @@ header:hover .global-counter, header:active .global-counter {
     padding: 5px 12px;
     border-radius: 6px;
     text-transform: uppercase;
-    box-shadow: 0 0 15px #00ff66; 
+    box-shadow: 0 0 15px rgba(0, 255, 102, 0.5); 
     z-index: 10;
     letter-spacing: 1px;
     cursor: pointer;
+}
+
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 2.2rem;
+    }
+    .counters-wrapper {
+        position: static;
+        margin-top: 15px;
+        display: flex;
+        justify-content: center;
+    }
+    .online-counter {
+        position: static;
+        margin-top: 10px;
+    }
+    header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .viewer-nav h3 {
+        font-size: 1rem;
+        max-width: 40%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .viewer-btn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
 }
 
 .chapter{
@@ -242,6 +307,10 @@ header:hover .global-counter, header:active .global-counter {
     border-radius: 6px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7); 
     border: 1px solid #111; 
+    image-rendering: -webkit-optimize-contrast;
+    content-visibility: auto;
+    backface-visibility: hidden;
+    transform: translateZ(0);
 }
 
 /* ==========================================================================
@@ -355,20 +424,24 @@ header:hover .global-counter, header:active .global-counter {
     font-size: 0.95rem;
 }
 
+.comment-author.es-respuesta {
+    color: #00ff66;
+}
+
 .comment-date {
     font-size: 0.8rem;
     color: #666;
 }
 
 .badge-autor {
-    background: #ff0000;
+    background: #00ff66;
     color: #000;
     font-weight: bold;
     font-size: 0.7rem;
     padding: 2px 8px;
     border-radius: 4px;
     text-transform: uppercase;
-    box-shadow: 0 0 10px #ff0000;
+    box-shadow: 0 0 15px #00ff66;
     letter-spacing: 0.5px;
 }
 
@@ -400,11 +473,11 @@ header:hover .global-counter, header:active .global-counter {
 }
 
 .action-btn.like-btn:hover {
-    color: #ff3366;
+    color: #0084ff;
 }
 
 .action-btn.like-btn.liked {
-    color: #ff3366;
+    color: #0084ff;
 }
 
 .action-btn.delete-btn {
@@ -421,6 +494,64 @@ header:hover .global-counter, header:active .global-counter {
 
 .comment-card.es-mio .action-btn.delete-btn {
     display: inline-flex; 
+}
+
+/* ESTILOS PARA RESPUESTAS */
+.reply-context {
+    background: #1a1a1a;
+    border-left: 3px solid #ff0000;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.reply-context b {
+    color: #00ff66;
+}
+
+.reply-indicator {
+    display: none;
+    background: #1a1a1a;
+    border-left: 4px solid #00ff66;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.reply-indicator.active {
+    display: flex;
+}
+
+.reply-info {
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.reply-info b {
+    color: #00ff66;
+}
+
+.cancel-reply-btn {
+    background: none;
+    border: none;
+    color: #ff4444;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 5px;
+    transition: 0.2s;
+}
+
+.cancel-reply-btn:hover {
+    color: #ff0000;
+    transform: scale(1.1);
+}
+
+.action-btn.reply-btn:hover {
+    color: #00ff66;
 }
 
 /* ANIMACIONES */
@@ -491,13 +622,18 @@ header:hover .global-counter, header:active .global-counter {
 
 <header>
     <h1>Thalesis</h1>
-    <div class="global-counter" id="contador-global">
-        <i class="fas fa-users"></i> <span id="num-global">...</span>
+    <div class="counters-wrapper">
+        <div class="global-counter" id="contador-global">
+            <i class="fas fa-users"></i> <span id="num-global">...</span>
+        </div>
+    </div>
+    <div class="online-counter" id="contador-online">
+        <i class="fas fa-circle" style="font-size: 0.4rem; animation: pulse 2s infinite;"></i> 
+        <span id="num-online">...</span>
     </div>
 </header>
 
 <div class="section">
-    <h2> </h2>
     <div class="info-box" id="aviso-container"></div>
 </div>
 
@@ -516,8 +652,21 @@ header:hover .global-counter, header:active .global-counter {
     
     <div class="viewer-content" id="viewer-content"></div>
 
+    <div class="viewer-nav" id="viewer-nav-bottom" style="position: static; border-top: 2px solid #ff0000; border-bottom: none; margin-top: 20px; box-shadow: 0 -4px 15px rgba(255, 0, 0, 0.3);">
+        <button class="viewer-btn" id="btn-prev-bottom">◀ Ant</button>
+        <h3 id="viewer-title-bottom">Capítulo</h3>
+        <button class="viewer-btn" id="btn-close-bottom">Volver ✕</button>
+        <button class="viewer-btn" id="btn-next-bottom">Sig ▶</button>
+    </div>
+
     <div class="comments-section" id="seccion-comentarios-root">
         <h4>Comentarios</h4>
+
+        <div class="reply-indicator" id="reply-indicator">
+            <div class="reply-info">Respondiendo a <b id="reply-target-name">...</b></div>
+            <button type="button" class="cancel-reply-btn" id="btn-cancel-reply" title="Cancelar respuesta">✕</button>
+        </div>
+
         <form class="comment-form" id="formulario-comentario">
             <input type="text" id="comentario-nombre" placeholder="Tu nombre o alias..." required maxlength="30">
             <textarea id="comentario-texto" placeholder="¿Qué te pareció el capítulo?..." required maxlength="500"></textarea>
@@ -534,27 +683,23 @@ header:hover .global-counter, header:active .global-counter {
     <a href="https://www.tiktok.com/@r_.fin.com" target="_blank">
         <i class="fab fa-tiktok"></i> TikTok
     </a>
-    <!-- ========================================== -->
-<!-- ENLACE DE PAYPAL ESTILO REDES SOCIALES (INDEPENDIENTE) -->
-<!-- ========================================== -->
+
 <style>
     .paypal-social-link {
         display: inline-flex;
         align-items: center;
-        gap: 8px; /* Mismo espacio que tienen tus otros enlaces */
-        color: inherit; /* Utiliza el mismo color de texto de tu web */
+        gap: 8px; 
+        color: inherit; 
         text-decoration: none;
         font-family: inherit;
-        font-size: inherit; /* Mismo tamaño de letra que YouTube y TikTok */
-        transition: color 0.2s ease; /* Transición suave */
+        font-size: inherit; 
+        transition: color 0.2s ease; 
     }
     
-    /* El efecto para que se ponga rojo al pasar el mouse encima */
     .paypal-social-link:hover {
-        color: #ff0000 !important; /* Rojo idéntico al de tus otros hovers */
+        color: #ff0000 !important; 
     }
 
-    /* Estilo para el icono */
     .paypal-social-link i {
         font-size: 1.1em;
     }
@@ -563,12 +708,11 @@ header:hover .global-counter, header:active .global-counter {
 <a href="https://www.paypal.com/donate/?hosted_button_id=HEMCPFBLK883E&amt=0" target="_blank" class="paypal-social-link">
     <i class="fab fa-paypal"></i> Ayudar al creador
 </a>
-<!-- ========================================== -->
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getDatabase, ref, onValue, runTransaction, push, set, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  import { getDatabase, ref, onValue, runTransaction, push, set, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBSO8Cfuq2t9xvJ_jJMAI-ygpgJ1ezFUHQ",
@@ -586,6 +730,10 @@ header:hover .global-counter, header:active .global-counter {
 
   const CLAVE_SECRETA_AUTOR = "thalesis2026"; 
 
+  // --- SOLUCIÓN AL BUG DE SCROLL EN RECARGA ---
+  history.scrollRestoration = 'manual';
+  window.scrollTo(0, 0);
+
   // --- VISITAS ---
   window.registrarVisitaInicio = function() {
       const ahora = Date.now();
@@ -602,6 +750,19 @@ header:hover .global-counter, header:active .global-counter {
       const elementoGlobal = document.getElementById("num-global");
       onValue(refInicio, (snapshot) => {
           elementoGlobal.innerText = snapshot.val() || 0;
+      });
+
+      // --- PRESENCIA REALTIME ---
+      const refPresenciaRoot = ref(database, 'presencia');
+      const refMiPresencia = push(refPresenciaRoot);
+      const elementoOnline = document.getElementById("num-online");
+
+      set(refMiPresencia, { conectado: true, fecha: serverTimestamp() });
+      onDisconnect(refMiPresencia).remove();
+
+      onValue(refPresenciaRoot, (snapshot) => {
+          const total = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+          if (elementoOnline) elementoOnline.innerText = total;
       });
   };
 
@@ -643,7 +804,6 @@ header:hover .global-counter, header:active .global-counter {
       return fechaObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  // --- NUEVA FUNCIÓN: Controlar bloqueo de la caja de nombres ---
   window.verificarYBloquearNombre = function() {
       const inputNombre = document.getElementById("comentario-nombre");
       if (!inputNombre) return;
@@ -662,6 +822,36 @@ header:hover .global-counter, header:active .global-counter {
 
   // --- COMENTARIOS ---
   let desvincularEscuchaComentarios = null;
+  let replyState = {
+      commentId: null,
+      authorName: null
+  };
+
+  window.setReplyState = function(id, author) {
+      replyState.commentId = id;
+      replyState.authorName = author;
+      
+      const indicator = document.getElementById("reply-indicator");
+      const targetName = document.getElementById("reply-target-name");
+      const commentInput = document.getElementById("comentario-texto");
+
+      if (indicator && targetName) {
+          targetName.innerText = author;
+          indicator.classList.add("active");
+          commentInput.focus();
+          commentInput.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+  };
+
+  window.cancelReply = function() {
+      replyState.commentId = null;
+      replyState.authorName = null;
+      
+      const indicator = document.getElementById("reply-indicator");
+      if (indicator) {
+          indicator.classList.remove("active");
+      }
+  };
 
   window.cargarComentariosDelCapitulo = function(nombreCap, contenedorHtml, scrollAlFinal = false) {
       if (desvincularEscuchaComentarios) desvincularEscuchaComentarios();
@@ -693,13 +883,10 @@ header:hover .global-counter, header:active .global-counter {
               card.className = "comment-card";
               card.id = "card-" + idComentario;
               
-              // REGLA DEFINITIVA Y EXTREMADAMENTE SEGURA CONTRA BUGS:
               let esMiComentarioReal = false;
-
               if (info.esAutor === true) {
                   if (soyElAutorLogueado) esMiComentarioReal = true;
               } else {
-                  // Eres el dueño si el ID está en tu historial local Y tu alias fijo coincide con el del mensaje
                   if (misComentariosGuardados.includes(idComentario) && nombreLocalFijo === info.autor) {
                       esMiComentarioReal = true;
                   }
@@ -709,29 +896,38 @@ header:hover .global-counter, header:active .global-counter {
                   card.classList.add("es-mio");
               }
 
-              let badgeAutorHtml = "";
-              if (info.esAutor === true) {
-                  badgeAutorHtml = `<span class="badge-autor">Autor</span>`;
-              }
-
+              let badgeAutorHtml = info.esAutor ? `<span class="badge-autor">Autor</span>` : "";
               const textoFecha = window.calcularTiempoRelativo(info.fecha);
               const yaTieneLike = localStorage.getItem(`liked_${idComentario}`);
               const claseLiked = yaTieneLike ? "liked" : "";
-              const colorCorazon = yaTieneLike ? '#ff3366' : '#555';
+              const colorCorazon = yaTieneLike ? '#0084ff' : '#555';
               
+              let replyContextHtml = "";
+              if (info.replyTo) {
+                  replyContextHtml = `
+                      <div class="reply-context">
+                          <i class="fas fa-reply fa-rotate-180"></i> Respondiendo a <b>@${escaperHtml(info.replyTo.author)}</b>
+                      </div>
+                  `;
+              }
+
               card.innerHTML = `
                   <div class="comment-header">
                       <div class="comment-author-wrapper">
-                          <span class="comment-author">${escaperHtml(info.autor)}</span>
+                          <span class="comment-author ${info.replyTo ? 'es-respuesta' : ''}">${escaperHtml(info.autor)}</span>
                           ${badgeAutorHtml}
                           <span class="comment-date">${textoFecha}</span>
                       </div>
-                      <button class="action-btn delete-btn" data-id="${idComentario}"><i class="fas fa-times"></i> Borrar</button>
+                      <button class="action-btn delete-btn" data-id="${idComentario}"><i class="fas fa-trash-alt"></i></button>
                   </div>
+                  ${replyContextHtml}
                   <p class="comment-text">${escaperHtml(info.texto)}</p>
                   <div class="comment-actions">
                       <button class="action-btn like-btn ${claseLiked}" data-id="${idComentario}">
                           <i class="fas fa-heart" style="color: ${colorCorazon}"></i> <span>${info.likes || 0}</span>
+                      </button>
+                      <button class="action-btn reply-btn" data-id="${idComentario}" data-author="${escaperHtml(info.autor)}">
+                          <i class="fas fa-comment-dots"></i> Responder
                       </button>
                   </div>
               `;
@@ -743,7 +939,7 @@ header:hover .global-counter, header:active .global-counter {
                   if (!haDadoLike) {
                       localStorage.setItem(`liked_${idComentario}`, 'true');
                       e.currentTarget.classList.add("liked");
-                      e.currentTarget.querySelector("i").style.color = "#ff3366";
+                      e.currentTarget.querySelector("i").style.color = "#0084ff";
                       window.crearEfectoLluviaCorazones(e); 
                       runTransaction(refLike, (actual) => (actual || 0) + 1);
                   } else {
@@ -758,14 +954,18 @@ header:hover .global-counter, header:active .global-counter {
               });
 
               card.querySelector(".delete-btn").addEventListener("click", (e) => {
-                  const confirmar = confirm("¿Seguro que quieres eliminar tu comentario?");
-                  if (confirmar) {
+                  if (confirm("¿Seguro que quieres eliminar tu comentario?")) {
                       window.crearEfectoExplosionComentario(e.currentTarget, card); 
                       setTimeout(() => {
-                          const refBorrar = ref(database, `comentarios/${nombreCap}/${idComentario}`);
-                          remove(refBorrar);
+                          remove(ref(database, `comentarios/${nombreCap}/${idComentario}`));
                       }, 400);
                   }
+              });
+
+              card.querySelector(".reply-btn").addEventListener("click", (e) => {
+                  const id = e.currentTarget.getAttribute("data-id");
+                  const author = e.currentTarget.getAttribute("data-author");
+                  window.setReplyState(id, author);
               });
 
               contenedorHtml.appendChild(card);
@@ -787,354 +987,278 @@ header:hover .global-counter, header:active .global-counter {
       const nombreLimpio = autor.trim();
 
       if (nombreLimpio === "Raylin AC") {
-          const yaLogueado = localStorage.getItem("autor_autenticado");
-
-          if (yaLogueado === "true") {
+          if (localStorage.getItem("autor_autenticado") === "true") {
               esAutorReal = true;
           } else {
-              const pass = prompt("Para comentar como Creador, introduce tu contraseña de seguridad:");
+              const pass = prompt("Contraseña de seguridad:");
               if (pass === CLAVE_SECRETA_AUTOR) {
                   esAutorReal = true;
                   localStorage.setItem("autor_autenticado", "true"); 
                   window.verificarYBloquearNombre(); 
               } else {
-                  alert("Contraseña incorrecta. No puedes comentar usando el nombre del Creador.");
+                  alert("Incorrecta.");
                   return; 
               }
           }
-      } else {
-          // Si es un lector normal y no se ha guardado su nombre, lo congelamos ahora mismo
-          if (!localStorage.getItem("mi_nombre_fijo")) {
-              localStorage.setItem("mi_nombre_fijo", nombreLimpio);
-              window.verificarYBloquearNombre();
-          }
+      } else if (!localStorage.getItem("mi_nombre_fijo")) {
+          localStorage.setItem("mi_nombre_fijo", nombreLimpio);
+          window.verificarYBloquearNombre();
       }
 
       const refComentarios = ref(database, 'comentarios/' + nombreCap);
       const nuevoComentarioRef = push(refComentarios);
       const idNuevoComentario = nuevoComentarioRef.key;
 
-      set(nuevoComentarioRef, {
+      const dataParaGuardar = {
           autor: esAutorReal ? "Raylin AC" : localStorage.getItem("mi_nombre_fijo"),
           texto: texto,
           likes: 0,
           esAutor: esAutorReal, 
-          fecha: Date.now()
-      }).then(() => {
-          let misComentarios = [];
-          try {
-              misComentarios = JSON.parse(localStorage.getItem("mis_comentarios_v3") || "[]");
-          } catch(e) { misComentarios = []; }
-          
+          fecha: serverTimestamp()
+      };
+
+      if (replyState.commentId) {
+          dataParaGuardar.replyTo = {
+              id: replyState.commentId,
+              author: replyState.authorName
+          };
+      }
+
+      set(nuevoComentarioRef, dataParaGuardar).then(() => {
+          let misComentarios = JSON.parse(localStorage.getItem("mis_comentarios_v3") || "[]");
           misComentarios.push(idNuevoComentario);
           localStorage.setItem("mis_comentarios_v3", JSON.stringify(misComentarios));
+          window.cancelReply();
       });
   };
 
   function escaperHtml(texto) {
-      return texto.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      if (!texto) return "";
+      return texto.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
-</script>
 
-<script>
-const usuario = "railinc035-gif";
-const repo = "Mizuvichi";
-const api = `https://api.github.com/repos/${usuario}/${repo}/contents`;
+  // --- LÓGICA DE GITHUB ---
+  const usuario = "railinc035-gif";
+  const repo = "Mizuvichi";
+  const api = `https://api.github.com/repos/${usuario}/${repo}/contents`;
 
-let listaCapitulosGuardados = [];
-let indiceCapituloActual = -1;
+  let listaCapitulosGuardados = [];
+  let indiceCapituloActual = -1;
 
-const nombresDeCapitulos = {
-    "Cap_01": "Capítulo 01: Funeral para nadie"
-};
+  const nombresDeCapitulos = {
+      "Cap_01": "Capítulo 01: Funeral para nadie"
+  };
 
-function formatearNombreCapitulo(nombreCarpeta) {
-    if (nombresDeCapitulos[nombreCarpeta]) {
-        return nombresDeCapitulos[nombreCarpeta];
-    }
-    return nombreCarpeta.replace("Cap_", "Capítulo ");
-}
+  function formatearNombreCapitulo(nombreCarpeta) {
+      if (nombresDeCapitulos[nombreCarpeta]) {
+          return nombresDeCapitulos[nombreCarpeta];
+      }
+      return nombreCarpeta.replace("Cap_", "Capítulo ");
+  }
 
-window.crearEfectoLluviaCorazones = function(e) {
-    const emojis = ['❤️', '✨', '🔥', '💖'];
-    const cantidad = 12; 
-    const rootSeccion = document.getElementById("seccion-comentarios-root");
-    
-    const boundsRoot = rootSeccion.getBoundingClientRect();
-    const boundsBtn = e.currentTarget.getBoundingClientRect();
-    
-    const xOriginal = boundsBtn.left - boundsRoot.left + boundsBtn.width / 2;
-    const yOriginal = boundsBtn.top - boundsRoot.top + boundsBtn.height / 2;
+  window.crearEfectoLluviaCorazones = function(e) {
+      const emojis = ['❤️', '✨', '🔥', '💖'];
+      const rootSeccion = document.getElementById("seccion-comentarios-root");
+      const boundsRoot = rootSeccion.getBoundingClientRect();
+      const boundsBtn = e.currentTarget.getBoundingClientRect();
+      const xOriginal = boundsBtn.left - boundsRoot.left + boundsBtn.width / 2;
+      const yOriginal = boundsBtn.top - boundsRoot.top + boundsBtn.height / 2;
 
-    for (let i = 0; i < cantidad; i++) {
-        const span = document.createElement('span');
-        span.className = 'floating-emoji';
-        span.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-        
-        span.style.left = `${xOriginal}px`;
-        span.style.top = `${yOriginal}px`;
+      for (let i = 0; i < 12; i++) {
+          const span = document.createElement('span');
+          span.className = 'floating-emoji';
+          span.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+          span.style.left = `${xOriginal}px`;
+          span.style.top = `${yOriginal}px`;
+          const angulo = (Math.random() * 120 + 30) * (Math.PI / 180); 
+          const velocidad = Math.random() * 100 + 50;
+          const xDestino = Math.cos(angulo) * velocidad * (Math.random() > 0.5 ? 1 : -1);
+          const yDestino = -Math.sin(angulo) * velocidad - 30; 
+          span.style.setProperty('--x', `${xDestino}px`);
+          span.style.setProperty('--y', `${yDestino}px`);
+          rootSeccion.appendChild(span);
+          span.addEventListener('animationend', () => span.remove());
+      }
+  };
 
-        const angulo = (Math.random() * 120 + 30) * (Math.PI / 180); 
-        const velocidad = Math.random() * 100 + 50;
-        
-        const xDestino = Math.cos(angulo) * velocidad * (Math.random() > 0.5 ? 1 : -1);
-        const yDestino = -Math.sin(angulo) * velocidad - 30; 
+  window.crearEfectoExplosionComentario = function(botonClicado, elementoCard) {
+      const rootSeccion = document.getElementById("seccion-comentarios-root");
+      const boundsRoot = rootSeccion.getBoundingClientRect();
+      const boundsBtn = botonClicado.getBoundingClientRect();
+      const colores = ['#ff0000', '#b30000', '#300000', '#555555', '#222222'];
+      elementoCard.style.opacity = '0';
+      const xCentro = boundsBtn.left - boundsRoot.left + boundsBtn.width / 2;
+      const yCentro = boundsBtn.top - boundsRoot.top + boundsBtn.height / 2;
 
-        span.style.setProperty('--x', `${xDestino}px`);
-        span.style.setProperty('--y', `${yDestino}px`);
+      for (let i = 0; i < 40; i++) {
+          const particula = document.createElement('div');
+          particula.className = 'particle-fx';
+          particula.style.left = `${xCentro}px`;
+          particula.style.top = `${yCentro}px`;
+          particula.style.background = colores[Math.floor(Math.random() * colores.length)];
+          const mx = (Math.random() - 0.5) * 250; 
+          const my = (Math.random() * 150) - 50;  
+          particula.style.setProperty('--mx', `${mx}px`);
+          particula.style.setProperty('--my', `${my}px`);
+          rootSeccion.appendChild(particula);
+          particula.addEventListener('animationend', () => particula.remove());
+      }
+  };
 
-        rootSeccion.appendChild(span);
-        span.addEventListener('animationend', () => span.remove());
-    }
-};
+  async function cargarAvisos() {
+      const contenedorAvisos = document.getElementById("aviso-container");
+      try {
+          const respuesta = await fetch(`${api}/Aviso`);
+          if (!respuesta.ok) { contenedorAvisos.parentElement.style.display = "none"; return; }
+          const archivos = await respuesta.json();
+          const pngs = archivos.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true}));
+          if (pngs.length === 0) { contenedorAvisos.parentElement.style.display = "none"; return; }
 
-window.crearEfectoExplosionComentario = function(botonClicado, elementoCard) {
-    const rootSeccion = document.getElementById("seccion-comentarios-root");
-    const boundsRoot = rootSeccion.getBoundingClientRect();
-    const boundsBtn = botonClicado.getBoundingClientRect();
-    const cantidadParticulas = 40;
-    const colores = ['#ff0000', '#b30000', '#300000', '#555555', '#222222'];
+          const ultimoAvisoVisto = localStorage.getItem("ultimo_aviso_visto");
+          const idUltimoAviso = pngs[0].name;
 
-    elementoCard.style.opacity = '0';
+          pngs.forEach((img, index) => {
+              const wrapper = document.createElement("div");
+              wrapper.className = "aviso-wrapper";
+              if (index === 0 && ultimoAvisoVisto !== idUltimoAviso) {
+                  const tag = document.createElement("span");
+                  tag.className = "badge-nuevo";
+                  tag.innerText = "Nuevo";
+                  tag.onclick = () => { localStorage.setItem("ultimo_aviso_visto", idUltimoAviso); tag.style.display = "none"; };
+                  wrapper.appendChild(tag);
+                  setTimeout(() => { localStorage.setItem("ultimo_aviso_visto", idUltimoAviso); if (tag) tag.style.opacity = "0"; setTimeout(() => { if(tag) tag.style.display = "none"; }, 500); }, 10000);
+              }
+              const imageElement = document.createElement("img");
+              imageElement.src = img.download_url;
+              imageElement.loading = "lazy";
+              imageElement.decoding = "async";
+              wrapper.appendChild(imageElement);
+              contenedorAvisos.appendChild(wrapper);
+          });
+      } catch (error) { contenedorAvisos.parentElement.style.display = "none"; }
+  }
 
-    const xCentro = boundsBtn.left - boundsRoot.left + boundsBtn.width / 2;
-    const yCentro = boundsBtn.top - boundsRoot.top + boundsBtn.height / 2;
+  async function cargarCapitulos(){
+      const contenedor = document.getElementById("chapters");
+      try {
+          const respuesta = await fetch(api);
+          const archivos = await respuesta.json();
+          const capitulos = archivos.filter(item => item.type === "dir" && item.name.startsWith("Cap_")).sort((a,b)=> b.name.localeCompare(a.name));
 
-    for (let i = 0; i < cantidadParticulas; i++) {
-        const particula = document.createElement('div');
-        particula.className = 'particle-fx';
-        
-        particula.style.left = `${xCentro}px`;
-        particula.style.top = `${yCentro}px`;
-        particula.style.background = colores[Math.floor(Math.random() * colores.length)];
-        
-        if(particula.style.background.includes('255') || particula.style.background.includes('b3')) {
-            particula.style.boxShadow = `0 0 8px ${particula.style.background}`;
-        }
+          for(const cap of capitulos){
+              const capApi = `${api}/${cap.name}`;
+              const capResp = await fetch(capApi);
+              const paginas = await capResp.json();
+              const pngs = paginas.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
+              if(pngs.length === 0) continue;
+              listaCapitulosGuardados.push({ name: cap.name, images: pngs });
+              const card = document.createElement("div");
+              card.className = "chapter";
+              card.innerHTML = `
+              <div class="chapter-header">
+                  <div class="chapter-left">
+                      <img class="chapter-thumb" src="${pngs[0].download_url}">
+                      <div><h3>${formatearNombreCapitulo(cap.name)}</h3><div class="chapter-views" id="views-${cap.name}">...</div></div>
+                  </div>
+                  <div>▶</div>
+              </div>
+              `;
+              card.querySelector(".chapter-header").addEventListener("click",()=>{
+                  const index = listaCapitulosGuardados.findIndex(c => c.name === cap.name);
+                  window.abrirVisor(index);
+              });
+              contenedor.appendChild(card);
+              window.escucharVisitasCapitulo(cap.name, card.querySelector(`#views-${cap.name}`));
+          }
+          if (window.location.hash.startsWith("#capitulo=")) {
+              const nombreCap = window.location.hash.replace("#capitulo=", "");
+              const index = listaCapitulosGuardados.findIndex(c => c.name === nombreCap);
+              if (index !== -1) window.abrirVisor(index);
+          }
+      } catch (error) { console.error(error); }
+  }
 
-        const mx = (Math.random() - 0.5) * 250; 
-        const my = (Math.random() * 150) - 50;  
+  window.abrirVisor = function(index, scrollAComentarios = false) {
+      if (index < 0 || index >= listaCapitulosGuardados.length) return;
+      window.cancelReply();
+      indiceCapituloActual = index;
+      const capitulo = listaCapitulosGuardados[indiceCapituloActual];
+      window.location.hash = `capitulo=${capitulo.name}`;
+      
+      const tituloFormateado = formatearNombreCapitulo(capitulo.name);
+      document.getElementById("viewer-title").innerText = tituloFormateado;
+      document.getElementById("viewer-title-bottom").innerText = tituloFormateado;
 
-        particula.style.setProperty('--mx', `${mx}px`);
-        particula.style.setProperty('--my', `${my}px`);
+      const contentDiv = document.getElementById("viewer-content");
+      contentDiv.innerHTML = ""; 
+      capitulo.images.forEach(img => {
+          const imageElement = document.createElement("img");
+          imageElement.src = img.download_url;
+          imageElement.loading = "lazy";
+          imageElement.decoding = "async";
+          contentDiv.appendChild(imageElement);
+      });
+      
+      const esPrimero = indiceCapituloActual === 0;
+      const esUltimo = indiceCapituloActual === listaCapitulosGuardados.length - 1;
 
-        rootSeccion.appendChild(particula);
-        particula.addEventListener('animationend', () => particula.remove());
-    }
-};
+      document.getElementById("btn-prev").disabled = esUltimo;
+      document.getElementById("btn-prev-bottom").disabled = esUltimo;
+      document.getElementById("btn-next").disabled = esPrimero;
+      document.getElementById("btn-next-bottom").disabled = esPrimero;
+      document.getElementById("viewer-container").style.display = "block";
+      document.getElementById("viewer-container").scrollTop = 0;
+      document.body.style.overflow = "hidden";
+      window.verificarYBloquearNombre();
+      window.registrarVisitaCapitulo(capitulo.name);
+      window.cargarComentariosDelCapitulo(capitulo.name, document.getElementById("lista-comentarios"), scrollAComentarios);
+  }
 
-async function cargarAvisos() {
-    const contenedorAvisos = document.getElementById("aviso-container");
-    try {
-        const respuesta = await fetch(`${api}/Aviso`);
-        if (!respuesta.ok) {
-            contenedorAvisos.parentElement.style.display = "none";
-            return;
-        }
-        const archivos = await respuesta.json();
-        const pngs = archivos
-            .filter(p => p.name.toLowerCase().endsWith(".png"))
-            .sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true}));
+  document.getElementById("formulario-comentario").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const cap = listaCapitulosGuardados[indiceCapituloActual];
+      if (cap) {
+          window.intentarPublicarComentario(cap.name, document.getElementById("comentario-nombre").value, document.getElementById("comentario-texto").value);
+          document.getElementById("comentario-texto").value = "";
+      }
+  });
 
-        if (pngs.length === 0) {
-            contenedorAvisos.parentElement.style.display = "none";
-            return;
-        }
+  const cerrarVisor = () => {
+      document.getElementById("viewer-container").style.display = "none";
+      document.body.style.overflow = "auto";
+      history.pushState("", document.title, window.location.pathname + window.location.search);
+  };
 
-        pngs.forEach((img, index) => {
-            const wrapper = document.createElement("div");
-            wrapper.className = "aviso-wrapper";
-            if (index === 0) {
-                const tag = document.createElement("span");
-                tag.className = "badge-nuevo";
-                tag.innerText = "Nuevo";
-                wrapper.appendChild(tag);
-            }
-            const imageElement = document.createElement("img");
-            imageElement.src = img.download_url;
-            imageElement.alt = "Aviso Informativo";
-            wrapper.appendChild(imageElement);
-            contenedorAvisos.appendChild(wrapper);
-        });
-    } catch (error) {
-        console.error("Error cargando los avisos:", error);
-        contenedorAvisos.parentElement.style.display = "none";
-    }
-}
+  document.getElementById("btn-close").addEventListener("click", cerrarVisor);
+  document.getElementById("btn-close-bottom").addEventListener("click", cerrarVisor);
 
-async function cargarCapitulos(){
-    const contenedor = document.getElementById("chapters");
-    try {
-        const respuesta = await fetch(api);
-        const archivos = await respuesta.json();
-        const capitulos = archivos.filter(item => item.type === "dir" && item.name.startsWith("Cap_"));
-        
-        capitulos.sort((a,b)=> b.name.localeCompare(a.name));
+  document.getElementById("btn-cancel-reply").addEventListener("click", window.cancelReply);
+  
+  const irAnterior = () => window.abrirVisor(indiceCapituloActual + 1);
+  const irSiguiente = () => window.abrirVisor(indiceCapituloActual - 1);
 
-        for(const cap of capitulos){
-            const capApi = `${api}/${cap.name}`;
-            const capResp = await fetch(capApi);
-            const paginas = await capResp.json();
-            const pngs = paginas
-                .filter(p => p.name.toLowerCase().endsWith(".png"))
-                .sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
+  document.getElementById("btn-prev").addEventListener("click", irAnterior);
+  document.getElementById("btn-prev-bottom").addEventListener("click", irAnterior);
+  document.getElementById("btn-next").addEventListener("click", irSiguiente);
+  document.getElementById("btn-next-bottom").addEventListener("click", irSiguiente);
 
-            if(pngs.length === 0) continue;
+  let ultimoScroll = 0;
+  const visorContainer = document.getElementById("viewer-container");
+  const barraNav = document.getElementById("viewer-nav");
+  visorContainer.addEventListener("scroll", () => {
+      let scrollActual = visorContainer.scrollTop;
+      if (scrollActual > ultimoScroll && scrollActual > 50) barraNav.classList.add("hidden"); 
+      else barraNav.classList.remove("hidden");
+      ultimoScroll = scrollActual;
+  });
 
-            listaCapitulosGuardados.push({
-                name: cap.name,
-                images: pngs
-            });
-
-            const miniatura = pngs[0].download_url;
-            const card = document.createElement("div");
-            card.className = "chapter";
-
-            let html = `
-            <div class="chapter-header">
-                <div class="chapter-left">
-                    <img class="chapter-thumb" src="${miniatura}">
-                    <div>
-                        <h3>${formatearNombreCapitulo(cap.name)}</h3>
-                        <div class="chapter-views" id="views-${cap.name}">Cargando lecturas...</div>
-                    </div>
-                </div>
-                <div>▶</div>
-            </div>
-            `;
-            card.innerHTML = html;
-
-            const header = card.querySelector(".chapter-header");
-            header.addEventListener("click",()=>{
-                const index = listaCapitulosGuardados.findIndex(c => c.name === cap.name);
-                abrirVisor(index);
-            });
-
-            contenedor.appendChild(card);
-
-            const elementoVistas = card.querySelector(`#views-${cap.name}`);
-            if (window.escucharVisitasCapitulo) {
-                window.escucharVisitasCapitulo(cap.name, elementoVistas);
-            }
-        }
-
-        verificarHashRuta();
-
-    } catch (error) {
-        console.error("Error cargando capítulos:", error);
-    }
-}
-
-function verificarHashRuta() {
-    const hash = window.location.hash;
-    if (hash && hash.startsWith("#capitulo=")) {
-        const nombreCap = hash.replace("#capitulo=", "");
-        const index = listaCapitulosGuardados.findIndex(c => c.name === nombreCap);
-        if (index !== -1) {
-            abrirVisor(index, true); 
-        }
-    }
-}
-
-function abrirVisor(index, scrollAComentarios = false) {
-    if (index < 0 || index >= listaCapitulosGuardados.length) return;
-    
-    indiceCapituloActual = index;
-    const capitulo = listaCapitulosGuardados[indiceCapituloActual];
-    
-    window.location.hash = `capitulo=${capitulo.name}`;
-    
-    document.getElementById("viewer-title").innerText = formatearNombreCapitulo(capitulo.name);
-    
-    const contentDiv = document.getElementById("viewer-content");
-    contentDiv.innerHTML = ""; 
-    
-    capitulo.images.forEach(img => {
-        const imageElement = document.createElement("img");
-        imageElement.src = img.download_url;
-        contentDiv.appendChild(imageElement);
-    });
-    
-    document.getElementById("btn-prev").disabled = indiceCapituloActual === listaCapitulosGuardados.length - 1;
-    document.getElementById("btn-next").disabled = indiceCapituloActual === 0;
-    
-    document.getElementById("viewer-container").style.display = "block";
-    
-    if (!scrollAComentarios) {
-        document.getElementById("viewer-container").scrollTop = 0;
-    }
-    document.body.style.overflow = "hidden";
-
-    // NUEVO: Bloquear el input de nombre al abrir la vista si ya existe registro
-    if (window.verificarYBloquearNombre) {
-        window.verificarYBloquearNombre();
-    }
-
-    if (window.registrarVisitaCapitulo) {
-        window.registrarVisitaCapitulo(capitulo.name);
-    }
-
-    const listaHtml = document.getElementById("lista-comentarios");
-    if (window.cargarComentariosDelCapitulo) {
-        window.cargarComentariosDelCapitulo(capitulo.name, listaHtml, scrollAComentarios);
-    }
-}
-
-document.getElementById("formulario-comentario").addEventListener("submit", (e) => {
-    e.preventDefault();
-    
-    const capituloActual = listaCapitulosGuardados[indiceCapituloActual];
-    const inputNombre = document.getElementById("comentario-nombre");
-    const inputTexto = document.getElementById("comentario-texto");
-
-    if (window.intentarPublicarComentario && capituloActual) {
-        window.intentarPublicarComentario(capituloActual.name, inputNombre.value, inputTexto.value);
-        inputTexto.value = "";
-    }
-});
-
-function cerrarVisor() {
-    document.getElementById("viewer-container").style.display = "none";
-    document.body.style.overflow = "auto";
-    history.pushState("", document.title, window.location.pathname + window.location.search);
-}
-
-document.getElementById("btn-close").addEventListener("click", cerrarVisor);
-
-document.getElementById("btn-prev").addEventListener("click", () => {
-    abrirVisor(indiceCapituloActual + 1);
-});
-
-document.getElementById("btn-next").addEventListener("click", () => {
-    abrirVisor(indiceCapituloActual - 1);
-});
-
-let ultimoScroll = 0;
-const barraNav = document.getElementById("viewer-nav");
-const visorContainer = document.getElementById("viewer-container");
-
-visorContainer.addEventListener("scroll", () => {
-    let scrollActual = visorContainer.scrollTop;
-    if (scrollActual > ultimoScroll && scrollActual > 50) {
-        barraNav.classList.add("hidden"); 
-    } else {
-        barraNav.classList.remove("hidden");
-    }
-    ultimoScroll = scrollActual;
-});
-
-window.addEventListener("DOMContentLoaded", () => {
-    if (window.registrarVisitaInicio) {
-        window.registrarVisitaInicio();
-    }
-    if (window.escucharVisitasGlobales) {
-        window.escucharVisitasGlobales();
-    }
-    cargarAvisos();
-    cargarCapitulos();
-});
+  window.addEventListener("DOMContentLoaded", () => {
+      window.registrarVisitaInicio();
+      window.escucharVisitasGlobales();
+      cargarAvisos();
+      cargarCapitulos();
+  });
 </script>
 
 </body>
 </html>
-
