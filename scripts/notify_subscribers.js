@@ -64,19 +64,40 @@ async function notify() {
     
     try {
       await axios.post(BREVO_API_URL, {
-        sender: { name: "Mizuvichi", email: SENDER_EMAIL },
+        sender: { name: "Thalesis Manga", email: SENDER_EMAIL },
         to: emailList,
-        subject: `📖 ¡Nuevo Capítulo: ${nombreCap}!`,
+        subject: `💥 ¡NUEVO CAPÍTULO! Lea el ${nombreCap} de Thalesis ahora`,
         htmlContent: `
-          <div style="font-family: sans-serif; background: #050505; color: white; padding: 20px; border-radius: 10px;">
-            <h2 style="color: #ff0000;">¡Hola lector!</h2>
-            <p>Se ha publicado el <strong>${nombreCap}</strong> en Thalesis.</p>
-            <a href="https://railinc035-gif.github.io/Mizuvichi/#capitulo=${cap}" 
-               style="background: #ff0000; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
-               Leer ahora
-            </a>
-            <br><br>
-            <p style="font-size: 0.8rem; color: #888;">Puedes desuscribirte en la web si ya no quieres recibir estos avisos.</p>
+          <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #0b0c10; color: #ffffff; padding: 40px 20px; text-align: center; max-width: 600px; margin: 0 auto; border: 2px solid #1f2833; border-radius: 12px;">
+            <!-- Encabezado de Marca -->
+            <h1 style="color: #ff0055; font-size: 2.5rem; letter-spacing: 2px; margin-bottom: 5px; text-transform: uppercase; font-weight: 900;">THALESIS</h1>
+            <p style="color: #66fcf1; font-size: 1rem; margin-top: 0; font-style: italic; letter-spacing: 1px;">Por Raylin AC</p>
+            
+            <hr style="border: 0; border-top: 1px solid #1f2833; margin: 30px 0;">
+            
+            <!-- Cuerpo del Mensaje -->
+            <h2 style="color: #ffffff; font-size: 1.5rem; font-weight: 700; margin-bottom: 15px;">¡Las páginas ya están listas, lector!</h2>
+            <p style="color: #c5c6c7; font-size: 1.1rem; line-height: 1.6; margin-bottom: 30px;">
+              La historia continúa. El nuevo <strong style="color: #ff0055; font-size: 1.2rem;">${nombreCap}</strong> acaba de ser publicado de forma independiente en nuestra web oficial. ¡No dejes que nadie te lo cuente!
+            </p>
+            
+            <!-- Botón de Acción Principal -->
+            <div style="margin: 40px 0;">
+              <a href="https://railinc035-gif.github.io/Mizuvichi/#capitulo=${cap}" 
+                 style="background-color: #ff0055; color: #ffffff; padding: 15px 35px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 1.2rem; display: inline-block; box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4); transition: transform 0.2s;">
+                 ⚔️ LEER CAPÍTULO AHORA
+              </a>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid #1f2833; margin: 30px 0;">
+            
+            <!-- Pie de página y Privacidad -->
+            <p style="font-size: 0.85rem; color: #45a29e; line-height: 1.5;">
+              Gracias por apoyar el manga independiente. Estás recibiendo este correo porque te suscribiste en nuestra plataforma web oficial.
+            </p>
+            <p style="font-size: 0.8rem; color: #666;">
+              Si deseas dejar de recibir avisos, puedes gestionar tu desuscripción directamente desde el panel de control de la web.
+            </p>
           </div>
         `
       }, {
@@ -91,19 +112,40 @@ async function notify() {
     console.log("Enviando correos por nuevo aviso...");
     try {
       await axios.post(BREVO_API_URL, {
-        sender: { name: "Mizuvichi", email: SENDER_EMAIL },
+        sender: { name: "Thalesis Manga", email: SENDER_EMAIL },
         to: emailList,
-        subject: `📢 ¡Nuevo Aviso Informativo!`,
+        subject: `📢 AVISO IMPORTANTE: Actualización del autor`,
         htmlContent: `
-          <div style="font-family: sans-serif; background: #050505; color: white; padding: 20px; border-radius: 10px;">
-            <h2 style="color: #00ff66;">¡Hola lector!</h2>
-            <p>Hay un nuevo aviso importante en Thalesis que no te puedes perder.</p>
-            <a href="https://railinc035-gif.github.io/Mizuvichi/" 
-               style="background: #00ff66; color: black; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
-               Ver Aviso
-            </a>
-            <br><br>
-            <p style="font-size: 0.8rem; color: #888;">Puedes desuscribirte en la web si ya no quieres recibir estos avisos.</p>
+          <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #0b0c10; color: #ffffff; padding: 40px 20px; text-align: center; max-width: 600px; margin: 0 auto; border: 2px solid #1f2833; border-radius: 12px;">
+            <!-- Encabezado de Marca -->
+            <h1 style="color: #66fcf1; font-size: 2.5rem; letter-spacing: 2px; margin-bottom: 5px; text-transform: uppercase; font-weight: 900;">THALESIS</h1>
+            <p style="color: #45a29e; font-size: 1rem; margin-top: 0; font-style: italic; letter-spacing: 1px;">Por Raylin AC</p>
+            
+            <hr style="border: 0; border-top: 1px solid #1f2833; margin: 30px 0;">
+            
+            <!-- Cuerpo del Mensaje -->
+            <h2 style="color: #ffffff; font-size: 1.5rem; font-weight: 700; margin-bottom: 15px;">¡Hola lector! Hay novedades en el proyecto</h2>
+            <p style="color: #c5c6c7; font-size: 1.1rem; line-height: 1.6; margin-bottom: 30px;">
+              Acabo de subir un nuevo comunicado oficial a la sección de <strong style="color: #66fcf1;">Avisos</strong> en la plataforma. Te recomiendo pasar a verlo para estar al tanto de los próximos pasos del manga.
+            </p>
+            
+            <!-- Botón de Acción Principal -->
+            <div style="margin: 40px 0;">
+              <a href="https://railinc035-gif.github.io/Mizuvichi/" 
+                 style="background-color: #66fcf1; color: #0b0c10; padding: 15px 35px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 1.2rem; display: inline-block; box-shadow: 0 4px 15px rgba(102, 252, 241, 0.4); transition: transform 0.2s;">
+                 📢 VER AVISO EN LA WEB
+              </a>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid #1f2833; margin: 30px 0;">
+            
+            <!-- Pie de página y Privacidad -->
+            <p style="font-size: 0.85rem; color: #45a29e; line-height: 1.5;">
+              Gracias por apoyar el manga independiente. Estás recibiendo este correo porque te suscribiste en nuestra plataforma web oficial.
+            </p>
+            <p style="font-size: 0.8rem; color: #666;">
+              Si deseas dejar de recibir avisos, puedes gestionar tu desuscripción directamente desde el panel de control de la web.
+            </p>
           </div>
         `
       }, {
