@@ -6,6 +6,9 @@
 <title>MIZUVICHI</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<link rel="preconnect" href="https://api.github.com">
+<link rel="preconnect" href="https://www.gstatic.com">
+<link rel="preconnect" href="https://webmanga-7b2cb-default-rtdb.firebaseio.com">
 
 <style>
 *{
@@ -33,6 +36,89 @@ header h1{
     font-size:3rem;
     color:#888; 
     transition: all 0.4s ease;
+}
+
+.follow-container {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    align-items: center;
+}
+
+.follow-btn {
+    background: #111;
+    color: #ffd700;
+    border: 1px solid #ffd700;
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.follow-btn:hover {
+    background: #ffd700;
+    color: #000;
+    box-shadow: 0 0 10px #ffd700;
+}
+
+.follow-btn.subscribed {
+    color: #00ff66;
+    border-color: #00ff66;
+}
+
+.follow-btn.subscribed:hover {
+    background: #00ff66;
+    color: #000;
+    box-shadow: 0 0 10px #00ff66;
+}
+
+.follow-form {
+    display: none;
+    background: #0a0a0a;
+    border: 1px solid #444;
+    padding: 15px;
+    border-radius: 12px;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 280px;
+    box-shadow: 0 10px 40px rgba(0,0,0,1);
+    margin-top: 10px;
+    border-top: 2px solid #00ff66;
+}
+
+.follow-form.active {
+    display: block;
+}
+
+.follow-form input {
+    width: 100%;
+    background: #111;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    outline: none;
+}
+
+.follow-form button {
+    width: 100%;
+    background: #00ff66;
+    color: #000;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
 }
 
 header:hover, header:active {
@@ -622,6 +708,18 @@ header:hover .online-counter, header:active .online-counter {
 
 <header>
     <h1>Thalesis</h1>
+    
+    <div class="follow-container">
+        <button class="follow-btn" id="btn-toggle-follow">
+            <i class="fas fa-bell"></i> Seguir
+        </button>
+        <form class="follow-form" id="form-follow">
+            <p style="font-size: 0.8rem; color: #aaa; margin-bottom: 10px;">Recibe avisos cuando suba nuevo contenido.</p>
+            <input type="email" id="follow-email" placeholder="Tu correo electrónico..." required>
+            <button type="submit">Suscribirme</button>
+        </form>
+    </div>
+
     <div class="counters-wrapper">
         <div class="global-counter" id="contador-global">
             <i class="fas fa-users"></i> <span id="num-global">...</span>
@@ -1257,8 +1355,84 @@ header:hover .online-counter, header:active .online-counter {
       window.escucharVisitasGlobales();
       cargarAvisos();
       cargarCapitulos();
+
+      const btnFollow = document.getElementById("btn-toggle-follow");
+      const formFollow = document.getElementById("form-follow");
+
+      const actualizarEstadoSuscripcion = () => {
+          const estaSuscrito = localStorage.getItem("mizuvichi_suscrito") === "true";
+          if (estaSuscrito) {
+              btnFollow.classList.add("subscribed");
+              btnFollow.innerHTML = '<i class="fas fa-check-circle"></i> Suscrito';
+          } else {
+              btnFollow.classList.remove("subscribed");
+              btnFollow.innerHTML = '<i class="fas fa-bell"></i> Seguir';
+          }
+      };
+
+      if (btnFollow && formFollow) {
+          actualizarEstadoSuscripcion();
+          btnFollow.onclick = (e) => {
+              e.stopPropagation();
+              const estaSuscrito = localStorage.getItem("mizuvichi_suscrito") === "true";
+              if (estaSuscrito) {
+                  if (confirm("¿Estás seguro de que quieres desuscribirte?")) {
+                      const email = localStorage.getItem("mizuvichi_email");
+                      if (email) {
+                          const emailKey = btoa(email).replace(/\//g, '_').replace(/\+/g, '-').replace(/=/g, '');
+                          const refSub = ref(database, 'subscriptores/' + emailKey);
+                          remove(refSub).then(() => {
+                              localStorage.removeItem("mizuvichi_suscrito");
+                              localStorage.removeItem("mizuvichi_email");
+                              actualizarEstadoSuscripcion();
+                              alert("Te has desuscrito correctamente.");
+                          });
+                      } else {
+                          localStorage.removeItem("mizuvichi_suscrito");
+                          actualizarEstadoSuscripcion();
+                      }
+                  }
+              } else {
+                  formFollow.classList.toggle("active");
+              }
+          };
+          document.addEventListener("click", (e) => {
+              if (!formFollow.contains(e.target) && e.target !== btnFollow) {
+                  formFollow.classList.remove("active");
+              }
+          });
+      }
+
+      if (formFollow) {
+          formFollow.onsubmit = (e) => {
+              e.preventDefault();
+              const emailInput = document.getElementById("follow-email");
+              const email = emailInput.value.trim().toLowerCase();
+              if (email) {
+                  // Codificamos el email para usarlo como llave y evitar duplicados
+                  const emailKey = btoa(email).replace(/\//g, '_').replace(/\+/g, '-').replace(/=/g, '');
+                  const refSub = ref(database, 'subscriptores/' + emailKey);
+                  
+                  set(refSub, {
+                      email: email,
+                      fecha: serverTimestamp(),
+                      activo: true
+                  }).then(() => {
+                      localStorage.setItem("mizuvichi_suscrito", "true");
+                      localStorage.setItem("mizuvichi_email", email);
+                      actualizarEstadoSuscripcion();
+                      alert("¡Gracias! Te avisaremos cuando haya novedades.");
+                      formFollow.reset();
+                      formFollow.classList.remove("active");
+                  }).catch(() => {
+                      alert("Error al suscribirse. Inténtalo de nuevo.");
+                  });
+              }
+          };
+      }
   });
 </script>
 
 </body>
 </html>
+
