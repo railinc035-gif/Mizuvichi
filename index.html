@@ -701,6 +701,25 @@ header:hover .online-counter, header:active .online-counter {
     color: #ff0000;
     text-shadow: 0 0 10px #ff0000;
 }
+
+.paypal-social-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: inherit;
+    text-decoration: none;
+    font-family: inherit;
+    font-size: inherit;
+    transition: color 0.2s ease;
+}
+
+.paypal-social-link:hover {
+    color: #ff0000 !important;
+}
+
+.paypal-social-link i {
+    font-size: 1.1em;
+}
 </style>
 </head>
 
@@ -781,27 +800,6 @@ header:hover .online-counter, header:active .online-counter {
     <a href="https://www.tiktok.com/@r_.fin.com" target="_blank">
         <i class="fab fa-tiktok"></i> TikTok
     </a>
-
-<style>
-    .paypal-social-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px; 
-        color: inherit; 
-        text-decoration: none;
-        font-family: inherit;
-        font-size: inherit; 
-        transition: color 0.2s ease; 
-    }
-    
-    .paypal-social-link:hover {
-        color: #ff0000 !important; 
-    }
-
-    .paypal-social-link i {
-        font-size: 1.1em;
-    }
-</style>
 
 <a href="https://www.paypal.com/donate/?hosted_button_id=HEMCPFBLK883E&amt=0" target="_blank" class="paypal-social-link">
     <i class="fab fa-paypal"></i> Ayudar al creador
@@ -1244,18 +1242,14 @@ header:hover .online-counter, header:active .online-counter {
           const capitulos = archivos.filter(item => item.type === "dir" && item.name.startsWith("Cap_")).sort((a,b)=> b.name.localeCompare(a.name));
 
           for(const cap of capitulos){
-              const capApi = `${api}/${cap.name}`;
-              const capResp = await fetch(capApi);
-              const paginas = await capResp.json();
-              const pngs = paginas.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
-              if(pngs.length === 0) continue;
-              listaCapitulosGuardados.push({ name: cap.name, images: pngs });
+              const miniaturaUrl = `https://raw.githubusercontent.com/${usuario}/${repo}/main/${cap.name}/001.png`;
+              listaCapitulosGuardados.push({ name: cap.name, images: null });
               const card = document.createElement("div");
               card.className = "chapter";
               card.innerHTML = `
               <div class="chapter-header">
                   <div class="chapter-left">
-                      <img class="chapter-thumb" src="${pngs[0].download_url}">
+                      <img class="chapter-thumb" src="${miniaturaUrl}" onerror="this.src='https://placehold.co/70x90?text=Cap'" loading="lazy">
                       <div><h3>${formatearNombreCapitulo(cap.name)}</h3><div class="chapter-views" id="views-${cap.name}">...</div></div>
                   </div>
                   <div>▶</div>
@@ -1276,7 +1270,7 @@ header:hover .online-counter, header:active .online-counter {
       } catch (error) { console.error(error); }
   }
 
-  window.abrirVisor = function(index, scrollAComentarios = false) {
+  window.abrirVisor = async function(index, scrollAComentarios = false) {
       if (index < 0 || index >= listaCapitulosGuardados.length) return;
       window.cancelReply();
       indiceCapituloActual = index;
@@ -1288,7 +1282,23 @@ header:hover .online-counter, header:active .online-counter {
       document.getElementById("viewer-title-bottom").innerText = tituloFormateado;
 
       const contentDiv = document.getElementById("viewer-content");
-      contentDiv.innerHTML = ""; 
+      contentDiv.innerHTML = '<div style="text-align:center; padding:50px; color:#ff0000;"><i class="fas fa-spinner fa-spin fa-3x"></i><br><br>Cargando páginas...</div>'; 
+      document.getElementById("viewer-container").style.display = "block";
+      document.getElementById("viewer-container").scrollTop = 0;
+      document.body.style.overflow = "hidden";
+
+      if (!capitulo.images) {
+          try {
+              const capResp = await fetch(`${api}/${capitulo.name}`);
+              const paginas = await capResp.json();
+              capitulo.images = paginas.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
+          } catch (e) {
+              contentDiv.innerHTML = '<div style="text-align:center; padding:50px; color:#ff0000;">Error al cargar el capítulo.</div>';
+              return;
+          }
+      }
+
+      contentDiv.innerHTML = "";
       capitulo.images.forEach(img => {
           const imageElement = document.createElement("img");
           imageElement.src = img.download_url;
@@ -1304,9 +1314,7 @@ header:hover .online-counter, header:active .online-counter {
       document.getElementById("btn-prev-bottom").disabled = esUltimo;
       document.getElementById("btn-next").disabled = esPrimero;
       document.getElementById("btn-next-bottom").disabled = esPrimero;
-      document.getElementById("viewer-container").style.display = "block";
-      document.getElementById("viewer-container").scrollTop = 0;
-      document.body.style.overflow = "hidden";
+      
       window.verificarYBloquearNombre();
       window.registrarVisitaCapitulo(capitulo.name);
       window.cargarComentariosDelCapitulo(capitulo.name, document.getElementById("lista-comentarios"), scrollAComentarios);
@@ -1435,4 +1443,3 @@ header:hover .online-counter, header:active .online-counter {
 
 </body>
 </html>
-
