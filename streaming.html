@@ -1,0 +1,1927 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THALESIS PLAY - Streaming</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<link rel="preconnect" href="https://api.github.com">
+<link rel="preconnect" href="https://www.gstatic.com">
+<link rel="preconnect" href="https://webmanga-7b2cb-default-rtdb.firebaseio.com">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:#050505;
+    color:white;
+    font-family:Arial, sans-serif;
+    overflow-x: hidden;
+    transition: background 0.5s ease;
+}
+
+body.cinema-mode {
+    background: #010101;
+}
+
+header{
+    position: relative;
+    text-align:center;
+    padding:30px 15px;
+    border-bottom:2px solid #300000;
+    transition: all 0.4s ease;
+}
+
+header h1{
+    font-size:3rem;
+    color:#888;
+    transition: all 0.4s ease;
+    letter-spacing: 2px;
+}
+
+.follow-container {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    align-items: center;
+}
+
+.follow-btn {
+    background: #111;
+    color: #ffd700;
+    border: 1px solid #ffd700;
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.follow-btn:hover {
+    background: #ffd700;
+    color: #000;
+    box-shadow: 0 0 10px #ffd700;
+}
+
+.follow-btn.subscribed {
+    color: #00ff66;
+    border-color: #00ff66;
+}
+
+.follow-btn.subscribed:hover {
+    background: #00ff66;
+    color: #000;
+    box-shadow: 0 0 10px #00ff66;
+}
+
+.follow-form {
+    display: none;
+    background: #0a0a0a;
+    border: 1px solid #444;
+    padding: 15px;
+    border-radius: 12px;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 280px;
+    box-shadow: 0 10px 40px rgba(0,0,0,1);
+    margin-top: 10px;
+    border-top: 2px solid #00ff66;
+}
+
+.follow-form.active {
+    display: block;
+}
+
+.follow-form input {
+    width: 100%;
+    background: #111;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    outline: none;
+}
+
+.follow-form button {
+    width: 100%;
+    background: #00ff66;
+    color: #000;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+header:hover, header:active {
+    border-bottom:2px solid #ff0000;
+    box-shadow:0 0 20px #ff0000;
+}
+
+header:hover h1, header:active h1 {
+    color:#fff;
+    text-shadow:0 0 10px #ff0000,
+                0 0 20px #ff0000,
+                0 0 40px #b30000;
+}
+
+.nav-back-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: #111;
+    color: #ff0000;
+    border: 1px solid #ff0000;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    z-index: 100;
+}
+
+.nav-back-btn:hover {
+    background: #ff0000;
+    color: #000;
+    box-shadow: 0 0 15px #ff0000;
+}
+
+.counters-wrapper {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+}
+
+.global-counter {
+    font-size: 0.9rem;
+    background: #0a0a0a;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid #222;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+    color: #666;
+}
+
+.online-counter {
+    position: absolute;
+    bottom: 10px;
+    left: 20px;
+    font-size: 0.75rem;
+    background: rgba(0, 255, 102, 0.05);
+    padding: 4px 10px;
+    border-radius: 30px;
+    border: 1px solid rgba(0, 255, 102, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #00ff66;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+header:hover .global-counter, header:active .global-counter {
+    color: #ff0000;
+    border-color: #ff0000;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
+}
+
+header:hover .online-counter, header:active .online-counter {
+    border-color: #00ff66;
+    background: rgba(0, 255, 102, 0.1);
+    box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
+}
+
+.main-container {
+    width: 95%;
+    max-width: 1200px;
+    margin: 30px auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+}
+
+@media (min-width: 992px) {
+    .main-container {
+        grid-template-columns: 2.5fr 1fr;
+    }
+}
+
+/* ==========================================================================
+   CUSTOM VIDEO PLAYER
+   ========================================================================== */
+.player-wrapper {
+    background: #000;
+    border: 2px solid #300000;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.player-wrapper:hover {
+    border-color: #ff0000;
+    box-shadow: 0 0 25px rgba(255, 0, 0, 0.3);
+}
+
+.video-container-inner {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 Aspect Ratio */
+    background: #000;
+}
+
+.video-element, .iframe-element {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+}
+
+/* CUSTOM CONTROLS OVERLAY */
+.custom-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0) 100%);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+}
+
+.player-wrapper:hover .custom-controls,
+.player-wrapper:focus-within .custom-controls {
+    opacity: 1;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    transition: height 0.1s ease;
+}
+
+.progress-bar-container:hover {
+    height: 10px;
+}
+
+.progress-filled {
+    height: 100%;
+    width: 0%;
+    background: #ff0000;
+    border-radius: 3px;
+    position: relative;
+    box-shadow: 0 0 8px #ff0000;
+}
+
+.progress-handle {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 6px #ff0000;
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%) scale(0);
+    transition: transform 0.1s ease;
+}
+
+.progress-bar-container:hover .progress-handle {
+    transform: translateY(-50%) scale(1);
+}
+
+.controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.controls-left, .controls-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.control-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-btn:hover {
+    color: #ff0000;
+    transform: scale(1.1);
+}
+
+.control-btn:active {
+    transform: scale(0.95);
+}
+
+.time-display {
+    font-size: 0.85rem;
+    color: #ccc;
+    font-family: monospace;
+}
+
+.volume-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.volume-slider {
+    width: 60px;
+    height: 4px;
+    -webkit-appearance: none;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    transition: width 0.2s ease;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 0 4px #ff0000;
+}
+
+.speed-select {
+    background: #111;
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    outline: none;
+}
+
+.speed-select:focus {
+    border-color: #ff0000;
+}
+
+/* PLAY/PAUSE BIG OVERLAY BUTTON */
+.big-play-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70px;
+    height: 70px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #ff0000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+    transition: all 0.3s;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+}
+
+.big-play-overlay i {
+    color: #fff;
+    font-size: 2rem;
+    margin-left: 5px; /* Adjust centering of play icon */
+    transition: color 0.3s;
+}
+
+.big-play-overlay:hover {
+    background: #ff0000;
+    box-shadow: 0 0 25px #ff0000;
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.big-play-overlay:hover i {
+    color: #000;
+}
+
+/* ==========================================================================
+   VIDEO INFORMATION & SOCIALS
+   ========================================================================== */
+.video-info-card {
+    background: #0a0a0a;
+    border: 1px solid #200000;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 15px;
+}
+
+.video-badges {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.badge-live {
+    background: #ff0000;
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+    box-shadow: 0 0 10px #ff0000;
+}
+
+.badge-live i {
+    font-size: 0.5rem;
+    animation: pulse 1.5s infinite;
+}
+
+.badge-vod {
+    background: #111;
+    color: #aaa;
+    border: 1px solid #444;
+    font-weight: bold;
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.video-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.video-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #888;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #200000;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.video-stats {
+    display: flex;
+    gap: 15px;
+}
+
+.video-stats span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.video-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.action-btn-pill {
+    background: #111;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.action-btn-pill:hover {
+    background: #ff0000;
+    color: #000;
+    border-color: #ff0000;
+    box-shadow: 0 0 10px #ff0000;
+}
+
+.action-btn-pill.active {
+    color: #00ff66;
+    border-color: #00ff66;
+}
+
+.video-description {
+    color: #ddd;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   PLAYLIST / STREAM CATALOG
+   ========================================================================== */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sidebar-title {
+    font-size: 1.3rem;
+    border-left: 4px solid #ff0000;
+    padding-left: 10px;
+    margin-bottom: 15px;
+}
+
+.playlist-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stream-card {
+    background: #111;
+    border: 2px solid #200000;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    gap: 12px;
+    transition: all 0.3s ease;
+    padding: 6px;
+}
+
+.stream-card:hover, .stream-card.active {
+    border-color: #ff0000;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+.stream-thumb-wrapper {
+    position: relative;
+    width: 100px;
+    height: 70px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stream-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.stream-card-badge {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    font-size: 0.6rem;
+    font-weight: bold;
+    padding: 2px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+}
+
+.stream-card-badge.live {
+    background: #ff0000;
+    color: #fff;
+    box-shadow: 0 0 5px #ff0000;
+}
+
+.stream-card-badge.vod {
+    background: rgba(0,0,0,0.8);
+    color: #ccc;
+    border: 1px solid #444;
+}
+
+.stream-card-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.stream-card-title {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stream-card-views {
+    font-size: 0.75rem;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ==========================================================================
+   SECCIÓN DE COMENTARIOS
+   ========================================================================== */
+.comments-section {
+    background: #0a0a0a;
+    border: 1px solid #200000;
+    border-radius: 12px;
+    padding: 25px;
+    position: relative;
+    margin-top: 15px;
+}
+
+.comments-section h4 {
+    font-size: 1.4rem;
+    color: #fff;
+    margin-bottom: 20px;
+    border-left: 4px solid #ff0000;
+    padding-left: 10px;
+}
+
+.comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.comment-form input, .comment-form textarea {
+    background: #111;
+    border: 1px solid #300000;
+    color: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: Arial, sans-serif;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.comment-form input:focus, .comment-form textarea:focus {
+    border-color: #ff0000;
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.2);
+}
+
+.comment-form input:disabled {
+    background: #151515;
+    border-color: #222;
+    color: #888;
+    cursor: not-allowed;
+}
+
+.comment-form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.comment-submit-btn {
+    align-self: flex-end;
+    background: #111;
+    color: #fff;
+    border: 1px solid #ff0000;
+    padding: 10px 25px;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 6px;
+    transition: all 0.3s;
+}
+
+.comment-submit-btn:hover {
+    background: #ff0000;
+    color: #000;
+    box-shadow: 0 0 15px #ff0000;
+}
+
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.comment-card {
+    background: #111;
+    border: 1px solid #200000;
+    padding: 15px;
+    border-radius: 8px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: opacity 0.3s ease;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.comment-author-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.comment-author {
+    font-weight: bold;
+    color: #ff0000;
+    font-size: 0.95rem;
+}
+
+.comment-author.es-respuesta {
+    color: #00ff66;
+}
+
+.comment-date {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.badge-autor {
+    background: #00ff66;
+    color: #000;
+    font-weight: bold;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    box-shadow: 0 0 15px #00ff66;
+    letter-spacing: 0.5px;
+}
+
+.comment-text {
+    color: #ddd;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.comment-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.action-btn.like-btn:hover {
+    color: #0084ff;
+}
+
+.action-btn.like-btn.liked {
+    color: #0084ff;
+}
+
+.action-btn.delete-btn {
+    display: none;
+    color: #aaa;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.action-btn.delete-btn:hover {
+    color: #fff;
+    background: #b30000;
+}
+
+.comment-card.es-mio .action-btn.delete-btn {
+    display: inline-flex;
+}
+
+/* ESTILOS PARA RESPUESTAS */
+.reply-context {
+    background: #1a1a1a;
+    border-left: 3px solid #ff0000;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.reply-context b {
+    color: #00ff66;
+}
+
+.reply-indicator {
+    display: none;
+    background: #1a1a1a;
+    border-left: 4px solid #00ff66;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.reply-indicator.active {
+    display: flex;
+}
+
+.reply-info {
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.reply-info b {
+    color: #00ff66;
+}
+
+.cancel-reply-btn {
+    background: none;
+    border: none;
+    color: #ff4444;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 5px;
+    transition: 0.2s;
+}
+
+.cancel-reply-btn:hover {
+    color: #ff0000;
+    transform: scale(1.1);
+}
+
+.action-btn.reply-btn:hover {
+    color: #00ff66;
+}
+
+/* FLOATING EFFECTS */
+.floating-emoji {
+    position: absolute;
+    pointer-events: none;
+    z-index: 999;
+    font-size: 1.5rem;
+    animation: flotarEmoji 1s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes flotarEmoji {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1.2);
+        opacity: 0;
+    }
+}
+
+.particle-fx {
+    position: absolute;
+    pointer-events: none;
+    z-index: 999;
+    width: 6px;
+    height: 6px;
+    border-radius: 2px;
+    animation: explotarParticula 0.8s cubic-bezier(0.1, 1, 0.2, 1) forwards;
+}
+
+@keyframes explotarParticula {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--mx), var(--my));
+        opacity: 0;
+    }
+}
+
+.social{
+    text-align:center;
+    margin:40px 0;
+}
+
+.social a{
+    color:#888;
+    text-decoration:none;
+    font-size:1.3rem;
+    margin:0 25px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: 0.3s;
+}
+
+.social a:hover, .social a:active{
+    color: #ff0000;
+    text-shadow: 0 0 10px #ff0000;
+}
+
+.paypal-social-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: inherit;
+    text-decoration: none;
+    font-family: inherit;
+    font-size: inherit;
+    transition: color 0.2s ease;
+}
+
+.paypal-social-link:hover {
+    color: #ff0000 !important;
+}
+
+.paypal-social-link i {
+    font-size: 1.1em;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <a href="index.html" class="nav-back-btn">
+        <i class="fas fa-book-open"></i> Leer Manga
+    </a>
+
+    <h1>Thalesis Play</h1>
+
+    <div class="follow-container">
+        <button class="follow-btn" id="btn-toggle-follow">
+            <i class="fas fa-bell"></i> Seguir
+        </button>
+        <form class="follow-form" id="form-follow">
+            <p style="font-size: 0.8rem; color: #aaa; margin-bottom: 10px;">Recibe avisos cuando suba nuevo contenido o directos.</p>
+            <input type="email" id="follow-email" placeholder="Tu correo electrónico..." required>
+            <button type="submit">Suscribirme</button>
+        </form>
+    </div>
+
+    <div class="counters-wrapper">
+        <div class="global-counter" id="contador-global">
+            <i class="fas fa-users"></i> <span id="num-global">...</span>
+        </div>
+    </div>
+    <div class="online-counter" id="contador-online">
+        <i class="fas fa-circle" style="font-size: 0.4rem; animation: pulse 2s infinite;"></i>
+        <span id="num-online">...</span>
+    </div>
+</header>
+
+<div class="main-container">
+    <!-- LEFT PANEL: PLAYER, META, COMMENTS -->
+    <div class="left-panel">
+        <!-- CUSTOM VIDEO PLAYER -->
+        <div class="player-wrapper" id="player-wrapper">
+            <div class="video-container-inner" id="video-container-inner">
+                <!-- HTML5 Native Video Tag -->
+                <video class="video-element" id="main-video" playsinline>
+                    <source src="" type="video/mp4">
+                    Tu navegador no soporta reproducción de video.
+                </video>
+
+                <!-- YouTube/Twitch Embed Iframe (dynamically toggleable) -->
+                <iframe class="iframe-element" id="iframe-embed" style="display: none;" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+
+                <!-- Custom Big Play Button Overlay -->
+                <div class="big-play-overlay" id="big-play-btn">
+                    <i class="fas fa-play"></i>
+                </div>
+
+                <!-- Custom Controls -->
+                <div class="custom-controls" id="custom-controls">
+                    <!-- Progress Bar -->
+                    <div class="progress-bar-container" id="progress-bar-container">
+                        <div class="progress-filled" id="progress-filled">
+                            <div class="progress-handle"></div>
+                        </div>
+                    </div>
+                    <!-- Controls Row -->
+                    <div class="controls-row">
+                        <div class="controls-left">
+                            <button class="control-btn" id="btn-play-pause" title="Play/Pause">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <div class="volume-container">
+                                <button class="control-btn" id="btn-mute" title="Mute/Unmute">
+                                    <i class="fas fa-volume-up"></i>
+                                </button>
+                                <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.05" value="1">
+                            </div>
+                            <span class="time-display" id="time-display">0:00 / 0:00</span>
+                        </div>
+                        <div class="controls-right">
+                            <select class="speed-select" id="speed-select" title="Velocidad">
+                                <option value="0.5">0.5x</option>
+                                <option value="1" selected>1.0x</option>
+                                <option value="1.25">1.25x</option>
+                                <option value="1.5">1.5x</option>
+                                <option value="2">2.0x</option>
+                            </select>
+                            <button class="control-btn" id="btn-theater" title="Modo Cine">
+                                <i class="fas fa-expand-arrows-alt"></i>
+                            </button>
+                            <button class="control-btn" id="btn-fullscreen" title="Pantalla Completa">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIDEO DETAILS CARD -->
+        <div class="video-info-card">
+            <div class="video-badges" id="video-badges">
+                <!-- Badges will load dynamically -->
+            </div>
+            <h2 class="video-title" id="video-title">Cargando transmisión...</h2>
+            <div class="video-meta-row">
+                <div class="video-stats">
+                    <span id="video-reads-count"><i class="fas fa-eye"></i> ... vistas</span>
+                    <span id="video-likes-count"><i class="fas fa-heart"></i> ... likes</span>
+                </div>
+                <div class="video-actions">
+                    <button class="action-btn-pill" id="btn-like-video">
+                        <i class="fas fa-thumbs-up"></i> Me gusta
+                    </button>
+                    <button class="action-btn-pill" id="btn-share-video">
+                        <i class="fas fa-share-alt"></i> Compartir
+                    </button>
+                </div>
+            </div>
+            <p class="video-description" id="video-description">
+                Cargando descripción detallada de la transmisión...
+            </p>
+        </div>
+
+        <!-- COMMENTS SECTION -->
+        <div class="comments-section" id="seccion-comentarios-root">
+            <h4>Conversación en Vivo & Comentarios</h4>
+
+            <div class="reply-indicator" id="reply-indicator">
+                <div class="reply-info">Respondiendo a <b id="reply-target-name">...</b></div>
+                <button type="button" class="cancel-reply-btn" id="btn-cancel-reply" title="Cancelar respuesta">✕</button>
+            </div>
+
+            <form class="comment-form" id="formulario-comentario">
+                <input type="text" id="comentario-nombre" placeholder="Tu nombre o alias..." required maxlength="30">
+                <textarea id="comentario-texto" placeholder="Escribe un comentario..." required maxlength="500"></textarea>
+                <button type="submit" class="comment-submit-btn">Comentar</button>
+            </form>
+            <div class="comments-list" id="lista-comentarios"></div>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL: SIDEBAR & STREAM LIST -->
+    <div class="sidebar">
+        <h3 class="sidebar-title">Transmisiones</h3>
+        <div class="playlist-container" id="playlist-container">
+            <!-- Playlist items loaded dynamically -->
+        </div>
+    </div>
+</div>
+
+<div class="social">
+    <a href="https://www.youtube.com/@RAYLINAC-n6x" target="_blank">
+        <i class="fab fa-youtube"></i> YouTube
+    </a>
+    <a href="https://www.tiktok.com/@r_.fin.com" target="_blank">
+        <i class="fab fa-tiktok"></i> TikTok
+    </a>
+    <a href="https://www.paypal.com/donate/?hosted_button_id=HEMCPFBLK883E&amt=0" target="_blank" class="paypal-social-link">
+        <i class="fab fa-paypal"></i> Ayudar al creador
+    </a>
+</div>
+
+<!-- Firebase SDK Module -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, onValue, runTransaction, push, set, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBSO8Cfuq2t9xvJ_jJMAI-ygpgJ1ezFUHQ",
+    authDomain: "webmanga-7b2cb.firebaseapp.com",
+    databaseURL: "https://webmanga-7b2cb-default-rtdb.firebaseio.com",
+    projectId: "webmanga-7b2cb",
+    storageBucket: "webmanga-7b2cb.firebasestorage.app",
+    messagingSenderId: "956720725778",
+    appId: "1:956720725778:web:ecb504f7c91e220a393dcb",
+    measurementId: "G-6ESEFLWEX2"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+
+  const CLAVE_SECRETA_AUTOR = "thalesis2026";
+
+  // --- COOLDOWNS & VISITS ---
+  window.registrarVisitaStreaming = function() {
+      const ahora = Date.now();
+      const ultimoRegistro = localStorage.getItem('cooldown_streaming_inicio');
+      if (!ultimoRegistro || (ahora - ultimoRegistro > 600000)) {
+          const refStreaming = ref(database, 'contadores/visitas_streaming');
+          runTransaction(refStreaming, (actual) => (actual || 0) + 1);
+          localStorage.setItem('cooldown_streaming_inicio', ahora);
+      }
+  };
+
+  window.escucharVisitasGlobales = function() {
+      const refStreaming = ref(database, 'contadores/visitas_streaming');
+      const elementoGlobal = document.getElementById("num-global");
+      onValue(refStreaming, (snapshot) => {
+          elementoGlobal.innerText = snapshot.val() || 0;
+      });
+
+      // --- PRESENCIA REALTIME ---
+      const refPresenciaRoot = ref(database, 'presencia_streaming');
+      const refMiPresencia = push(refPresenciaRoot);
+      const elementoOnline = document.getElementById("num-online");
+
+      set(refMiPresencia, { conectado: true, fecha: serverTimestamp() });
+      onDisconnect(refMiPresencia).remove();
+
+      onValue(refPresenciaRoot, (snapshot) => {
+          const total = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+          if (elementoOnline) elementoOnline.innerText = total;
+      });
+  };
+
+  window.registrarVisitaStreamIndividual = function(streamId) {
+      const ahora = Date.now();
+      const ultimoRegistro = localStorage.getItem('cooldown_stream_' + streamId);
+      if (!ultimoRegistro || (ahora - ultimoRegistro > 600000)) {
+          const refStreamViews = ref(database, 'contadores/stream_' + streamId);
+          runTransaction(refStreamViews, (actual) => (actual || 0) + 1);
+          localStorage.setItem('cooldown_stream_' + streamId, ahora);
+      }
+  };
+
+  window.escucharVisitasStreamIndividual = function(streamId, elementoHtml) {
+      const refStreamViews = ref(database, 'contadores/stream_' + streamId);
+      onValue(refStreamViews, (snapshot) => {
+          const visitas = snapshot.val() || 0;
+          if (elementoHtml) {
+              elementoHtml.innerHTML = `<i class="fas fa-eye"></i> ${visitas} vistas`;
+          }
+      });
+  };
+
+  window.calcularTiempoRelativo = function(timestamp) {
+      if (!timestamp) return "Hace un momento";
+      const ahora = Date.now();
+      const diferencia = ahora - timestamp;
+
+      const segundos = Math.floor(diferencia / 1000);
+      const minutos = Math.floor(segundos / 60);
+      const horas = Math.floor(minutos / 60);
+      const dias = Math.floor(horas / 24);
+
+      if (segundos < 60) return "Hace un momento";
+      if (minutos < 60) return `Hace ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}`;
+      if (horas < 24) return `Hace ${horas} ${horas === 1 ? 'hora' : 'horas'}`;
+      if (dias === 1) return "Ayer";
+      if (dias < 7) return `Hace ${dias} días`;
+
+      const fechaObj = new Date(timestamp);
+      return fechaObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
+  window.verificarYBloquearNombre = function() {
+      const inputNombre = document.getElementById("comentario-nombre");
+      if (!inputNombre) return;
+
+      const nombreGuardado = localStorage.getItem("mi_nombre_fijo");
+      const soyElAutorLogueado = localStorage.getItem("autor_autenticado") === "true";
+
+      if (soyElAutorLogueado) {
+          inputNombre.value = "Raylin AC";
+          inputNombre.disabled = true;
+      } else if (nombreGuardado) {
+          inputNombre.value = nombreGuardado;
+          inputNombre.disabled = true;
+      }
+  };
+
+  // --- FLOATING EFFECTS ---
+  window.crearEfectoLluviaCorazones = function(e) {
+      const emojis = ['❤️', '✨', '🔥', '💖'];
+      const rootSeccion = document.getElementById("seccion-comentarios-root");
+      const boundsRoot = rootSeccion.getBoundingClientRect();
+      const boundsBtn = e.currentTarget.getBoundingClientRect();
+      const xOriginal = boundsBtn.left - boundsRoot.left + boundsBtn.width / 2;
+      const yOriginal = boundsBtn.top - boundsRoot.top + boundsBtn.height / 2;
+
+      for (let i = 0; i < 12; i++) {
+          const span = document.createElement('span');
+          span.className = 'floating-emoji';
+          span.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+          span.style.left = `${xOriginal}px`;
+          span.style.top = `${yOriginal}px`;
+          const angulo = (Math.random() * 120 + 30) * (Math.PI / 180);
+          const velocidad = Math.random() * 100 + 50;
+          const xDestino = Math.cos(angulo) * velocidad * (Math.random() > 0.5 ? 1 : -1);
+          const yDestino = -Math.sin(angulo) * velocidad - 30;
+          span.style.setProperty('--x', `${xDestino}px`);
+          span.style.setProperty('--y', `${yDestino}px`);
+          rootSeccion.appendChild(span);
+          span.addEventListener('animationend', () => span.remove());
+      }
+  };
+
+  window.crearEfectoExplosionComentario = function(botonClicado, elementoCard) {
+      const rootSeccion = document.getElementById("seccion-comentarios-root");
+      const boundsRoot = rootSeccion.getBoundingClientRect();
+      const boundsBtn = botonClicado.getBoundingClientRect();
+      const colores = ['#ff0000', '#b30000', '#300000', '#555555', '#222222'];
+      elementoCard.style.opacity = '0';
+      const xCentro = boundsBtn.left - boundsRoot.left + boundsBtn.width / 2;
+      const yCentro = boundsBtn.top - boundsRoot.top + boundsBtn.height / 2;
+
+      for (let i = 0; i < 40; i++) {
+          const particula = document.createElement('div');
+          particula.className = 'particle-fx';
+          particula.style.left = `${xCentro}px`;
+          particula.style.top = `${yCentro}px`;
+          particula.style.background = colores[Math.floor(Math.random() * colores.length)];
+          const mx = (Math.random() - 0.5) * 250;
+          const my = (Math.random() * 150) - 50;
+          particula.style.setProperty('--mx', `${mx}px`);
+          particula.style.setProperty('--my', `${my}px`);
+          rootSeccion.appendChild(particula);
+          particula.addEventListener('animationend', () => particula.remove());
+      }
+  };
+
+  // --- COMMENTS ENGINE ---
+  let desvincularEscuchaComentarios = null;
+  let replyState = {
+      commentId: null,
+      authorName: null
+  };
+
+  window.setReplyState = function(id, author) {
+      replyState.commentId = id;
+      replyState.authorName = author;
+
+      const indicator = document.getElementById("reply-indicator");
+      const targetName = document.getElementById("reply-target-name");
+      const commentInput = document.getElementById("comentario-texto");
+
+      if (indicator && targetName) {
+          targetName.innerText = author;
+          indicator.classList.add("active");
+          commentInput.focus();
+          commentInput.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+  };
+
+  window.cancelReply = function() {
+      replyState.commentId = null;
+      replyState.authorName = null;
+
+      const indicator = document.getElementById("reply-indicator");
+      if (indicator) {
+          indicator.classList.remove("active");
+      }
+  };
+
+  function escaperHtml(texto) {
+      if (!texto) return "";
+      return texto.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  }
+
+  window.cargarComentariosDelStream = function(streamId, contenedorHtml, scrollAlFinal = false) {
+      if (desvincularEscuchaComentarios) desvincularEscuchaComentarios();
+
+      const refComentarios = ref(database, 'comentarios_streams/' + streamId);
+
+      desvincularEscuchaComentarios = onValue(refComentarios, (snapshot) => {
+          contenedorHtml.innerHTML = "";
+          const datos = snapshot.val();
+
+          if (!datos) {
+              contenedorHtml.innerHTML = `<p style="color:#555; font-size:0.9rem; text-align:center;">Nadie ha comentado aún. ¡Sé el primero!</p>`;
+              return;
+          }
+
+          const listaOrdenada = Object.keys(datos).reverse();
+
+          let misComentariosGuardados = [];
+          try {
+              misComentariosGuardados = JSON.parse(localStorage.getItem("mis_comentarios_streams_v1") || "[]");
+          } catch(e) { misComentariosGuardados = []; }
+
+          const soyElAutorLogueado = localStorage.getItem("autor_autenticado") === "true";
+          const nombreLocalFijo = localStorage.getItem("mi_nombre_fijo");
+
+          listaOrdenada.forEach((idComentario) => {
+              const info = datos[idComentario];
+              const card = document.createElement("div");
+              card.className = "comment-card";
+              card.id = "card-" + idComentario;
+
+              let esMiComentarioReal = false;
+              if (info.esAutor === true) {
+                  if (soyElAutorLogueado) esMiComentarioReal = true;
+              } else {
+                  if (misComentariosGuardados.includes(idComentario) && nombreLocalFijo === info.autor) {
+                      esMiComentarioReal = true;
+                  }
+              }
+
+              if (esMiComentarioReal) {
+                  card.classList.add("es-mio");
+              }
+
+              let badgeAutorHtml = info.esAutor ? `<span class="badge-autor">Autor</span>` : "";
+              const textoFecha = window.calcularTiempoRelativo(info.fecha);
+              const yaTieneLike = localStorage.getItem(`stream_liked_${idComentario}`);
+              const claseLiked = yaTieneLike ? "liked" : "";
+              const colorCorazon = yaTieneLike ? '#0084ff' : '#555';
+
+              let replyContextHtml = "";
+              if (info.replyTo) {
+                  replyContextHtml = `
+                      <div class="reply-context">
+                          <i class="fas fa-reply fa-rotate-180"></i> Respondiendo a <b>@${escaperHtml(info.replyTo.author)}</b>
+                      </div>
+                  `;
+              }
+
+              card.innerHTML = `
+                  <div class="comment-header">
+                      <div class="comment-author-wrapper">
+                          <span class="comment-author ${info.replyTo ? 'es-respuesta' : ''}">${escaperHtml(info.autor)}</span>
+                          ${badgeAutorHtml}
+                          <span class="comment-date">${textoFecha}</span>
+                      </div>
+                      <button class="action-btn delete-btn" data-id="${idComentario}"><i class="fas fa-trash-alt"></i></button>
+                  </div>
+                  ${replyContextHtml}
+                  <p class="comment-text">${escaperHtml(info.texto)}</p>
+                  <div class="comment-actions">
+                      <button class="action-btn like-btn ${claseLiked}" data-id="${idComentario}">
+                          <i class="fas fa-heart" style="color: ${colorCorazon}"></i> <span>${info.likes || 0}</span>
+                      </button>
+                      <button class="action-btn reply-btn" data-id="${idComentario}" data-author="${escaperHtml(info.autor)}">
+                          <i class="fas fa-comment-dots"></i> Responder
+                      </button>
+                  </div>
+              `;
+
+              card.querySelector(".like-btn").addEventListener("click", (e) => {
+                  const haDadoLike = localStorage.getItem(`stream_liked_${idComentario}`);
+                  const refLike = ref(database, `comentarios_streams/${streamId}/${idComentario}/likes`);
+
+                  if (!haDadoLike) {
+                      localStorage.setItem(`stream_liked_${idComentario}`, 'true');
+                      e.currentTarget.classList.add("liked");
+                      e.currentTarget.querySelector("i").style.color = "#0084ff";
+                      window.crearEfectoLluviaCorazones(e);
+                      runTransaction(refLike, (actual) => (actual || 0) + 1);
+                  } else {
+                      localStorage.removeItem(`stream_liked_${idComentario}`);
+                      e.currentTarget.classList.remove("liked");
+                      e.currentTarget.querySelector("i").style.color = "#555";
+                      runTransaction(refLike, (actual) => {
+                          let nuevoValor = (actual || 0) - 1;
+                          return nuevoValor < 0 ? 0 : nuevoValor;
+                      });
+                  }
+              });
+
+              card.querySelector(".delete-btn").addEventListener("click", (e) => {
+                  if (confirm("¿Seguro que quieres eliminar tu comentario?")) {
+                      window.crearEfectoExplosionComentario(e.currentTarget, card);
+                      setTimeout(() => {
+                          remove(ref(database, `comentarios_streams/${streamId}/${idComentario}`));
+                      }, 400);
+                  }
+              });
+
+              card.querySelector(".reply-btn").addEventListener("click", (e) => {
+                  const id = e.currentTarget.getAttribute("data-id");
+                  const author = e.currentTarget.getAttribute("data-author");
+                  window.setReplyState(id, author);
+              });
+
+              contenedorHtml.appendChild(card);
+          });
+
+          if (scrollAlFinal) {
+              setTimeout(() => {
+                  const seccionComentarios = document.getElementById("seccion-comentarios-root");
+                  if (seccionComentarios) {
+                      seccionComentarios.scrollIntoView({ behavior: "smooth" });
+                  }
+              }, 300);
+          }
+      });
+  };
+
+  window.intentarPublicarComentario = function(streamId, autor, texto) {
+      let esAutorReal = false;
+      const nombreLimpio = autor.trim();
+
+      if (nombreLimpio === "Raylin AC") {
+          if (localStorage.getItem("autor_autenticado") === "true") {
+              esAutorReal = true;
+          } else {
+              const pass = prompt("Contraseña de seguridad:");
+              if (pass === CLAVE_SECRETA_AUTOR) {
+                  esAutorReal = true;
+                  localStorage.setItem("autor_autenticado", "true");
+                  window.verificarYBloquearNombre();
+              } else {
+                  alert("Incorrecta.");
+                  return;
+              }
+          }
+      } else if (!localStorage.getItem("mi_nombre_fijo")) {
+          localStorage.setItem("mi_nombre_fijo", nombreLimpio);
+          window.verificarYBloquearNombre();
+      }
+
+      const refComentarios = ref(database, 'comentarios_streams/' + streamId);
+      const nuevoComentarioRef = push(refComentarios);
+      const idNuevoComentario = nuevoComentarioRef.key;
+
+      const dataParaGuardar = {
+          autor: esAutorReal ? "Raylin AC" : localStorage.getItem("mi_nombre_fijo"),
+          texto: texto,
+          likes: 0,
+          esAutor: esAutorReal,
+          fecha: serverTimestamp()
+      };
+
+      if (replyState.commentId) {
+          dataParaGuardar.replyTo = {
+              id: replyState.commentId,
+              author: replyState.authorName
+          };
+      }
+
+      set(nuevoComentarioRef, dataParaGuardar).then(() => {
+          let misComentarios = JSON.parse(localStorage.getItem("mis_comentarios_streams_v1") || "[]");
+          misComentarios.push(idNuevoComentario);
+          localStorage.setItem("mis_comentarios_streams_v1", JSON.stringify(misComentarios));
+          window.cancelReply();
+      });
+  };
+
+  // --- STREAM/VIDEO LIST DATA ---
+  const STREAM_CATALOG = [
+      {
+          id: "stream_promo_01",
+          title: "Trailer Oficial: Mizuvichi / Thalesis",
+          description: "¡No dejes que nadie te lo cuente! Descubre las primeras páginas y el trasfondo de Thalesis en este asombroso trailer oficial animado e ilustrado de forma independiente por el autor Raylin AC.",
+          type: "vod",
+          url: "https://www.w3schools.com/html/mov_bbb.mp4", // Native sample video fallback
+          thumbnail: "Cap_01/01.png",
+          views: 0
+      },
+      {
+          id: "speedpainting_cap01",
+          title: "Speedpainting - Ilustración del Capítulo 1",
+          description: "Mira el proceso creativo detrás de las portadas y los fondos del Capítulo 01. Dibujado y coloreado por completo en directo.",
+          type: "vod",
+          url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+          thumbnail: "Cap_01/02.png",
+          views: 0
+      },
+      {
+          id: "twitch_envivo",
+          title: "Directo de Dibujo y Charla en Twitch",
+          description: "Acompáñame en vivo mientras avanzo con el Capítulo 02. Charla libre con seguidores, preguntas y respuestas, teoría de dibujo, ¡y mucho más!",
+          type: "live",
+          url: "https://player.twitch.tv/?channel=twitchdev&parent=" + window.location.hostname, // Sample twitch channel embed fallback
+          thumbnail: "Cap_01/03.png",
+          views: 0
+      },
+      {
+          id: "youtube_promo",
+          title: "Reseña Completa del Capítulo de Debut en YouTube",
+          description: "Análisis exhaustivo del manga, los personajes principales, las revelaciones de las deidades y el destino de Mizuvichi.",
+          type: "vod",
+          url: "https://www.youtube.com/embed/dQw4w9WgXcQ", // YouTube embed fallback
+          thumbnail: "Cap_01/04.png",
+          views: 0
+      }
+  ];
+
+  let streamActual = null;
+
+  window.abrirStream = function(streamId) {
+      const stream = STREAM_CATALOG.find(s => s.id === streamId);
+      if (!stream) return;
+
+      streamActual = stream;
+      window.location.hash = `stream=${stream.id}`;
+
+      // Update active list card UI
+      document.querySelectorAll(".stream-card").forEach(card => {
+          if (card.getAttribute("data-id") === stream.id) {
+              card.classList.add("active");
+          } else {
+              card.classList.remove("active");
+          }
+      });
+
+      // Update Title & Description
+      document.getElementById("video-title").innerText = stream.title;
+      document.getElementById("video-description").innerText = stream.description;
+
+      // Update Badges
+      const badgeContainer = document.getElementById("video-badges");
+      if (stream.type === "live") {
+          badgeContainer.innerHTML = `<span class="badge-live"><i class="fas fa-circle"></i> En Vivo</span>`;
+      } else {
+          badgeContainer.innerHTML = `<span class="badge-vod">Grabación (VOD)</span>`;
+      }
+
+      // Load Video/Iframe Source
+      const videoEl = document.getElementById("main-video");
+      const iframeEl = document.getElementById("iframe-embed");
+      const playOverlay = document.getElementById("big-play-btn");
+
+      // Stop any running native video first
+      videoEl.pause();
+      videoEl.src = "";
+
+      if (stream.url.includes("youtube.com/embed/") || stream.url.includes("player.twitch.tv")) {
+          // It's an iframe embed
+          videoEl.style.display = "none";
+          playOverlay.style.display = "none";
+          document.getElementById("custom-controls").style.display = "none";
+
+          iframeEl.src = stream.url;
+          iframeEl.style.display = "block";
+      } else {
+          // It's a native mp4 video
+          iframeEl.style.display = "none";
+          iframeEl.src = "";
+
+          videoEl.src = stream.url;
+          videoEl.style.display = "block";
+          playOverlay.style.display = "flex";
+          document.getElementById("custom-controls").style.display = "flex";
+          document.getElementById("btn-play-pause").innerHTML = '<i class="fas fa-play"></i>';
+      }
+
+      // Track Likes & Likes Button State
+      const refLikesStream = ref(database, 'likes_streams/' + stream.id);
+      onValue(refLikesStream, (snap) => {
+          const likesCount = snap.val() || 0;
+          document.getElementById("video-likes-count").innerHTML = `<i class="fas fa-heart"></i> ${likesCount} likes`;
+      });
+
+      const yaTieneLikeStream = localStorage.getItem(`likes_stream_${stream.id}`) === "true";
+      const btnLikeVideo = document.getElementById("btn-like-video");
+      if (yaTieneLikeStream) {
+          btnLikeVideo.classList.add("active");
+          btnLikeVideo.innerHTML = '<i class="fas fa-thumbs-up"></i> Te gusta';
+      } else {
+          btnLikeVideo.classList.remove("active");
+          btnLikeVideo.innerHTML = '<i class="fas fa-thumbs-up"></i> Me gusta';
+      }
+
+      // Reset and trigger views counter
+      window.registrarVisitaStreamIndividual(stream.id);
+      window.escucharVisitasStreamIndividual(stream.id, document.getElementById("video-reads-count"));
+
+      // Load Comments
+      window.cargarComentariosDelStream(stream.id, document.getElementById("lista-comentarios"), false);
+  };
+
+  // --- VIDEO PLAYER ACTIONS ---
+  const video = document.getElementById("main-video");
+  const playBtn = document.getElementById("btn-play-pause");
+  const bigPlayBtn = document.getElementById("big-play-btn");
+  const muteBtn = document.getElementById("btn-mute");
+  const volumeSlider = document.getElementById("volume-slider");
+  const timeDisplay = document.getElementById("time-display");
+  const speedSelect = document.getElementById("speed-select");
+  const theaterBtn = document.getElementById("btn-theater");
+  const fullscreenBtn = document.getElementById("btn-fullscreen");
+  const progressBar = document.getElementById("progress-bar-container");
+  const progressFilled = document.getElementById("progress-filled");
+  const playerWrapper = document.getElementById("player-wrapper");
+
+  function togglePlay() {
+      if (video.paused) {
+          video.play();
+          playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+          bigPlayBtn.style.display = "none";
+      } else {
+          video.pause();
+          playBtn.innerHTML = '<i class="fas fa-play"></i>';
+          bigPlayBtn.style.display = "flex";
+      }
+  }
+
+  video.addEventListener("click", togglePlay);
+  playBtn.addEventListener("click", togglePlay);
+  bigPlayBtn.addEventListener("click", togglePlay);
+
+  video.addEventListener("timeupdate", () => {
+      const percentage = (video.currentTime / video.duration) * 100;
+      progressFilled.style.width = `${percentage}%`;
+
+      // Format time display
+      const formatTime = (seconds) => {
+          const m = Math.floor(seconds / 60) || 0;
+          const s = Math.floor(seconds % 60) || 0;
+          return `${m}:${s < 10 ? '0' : ''}${s}`;
+      };
+
+      timeDisplay.innerText = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+  });
+
+  // Mute / Volume Slider
+  function toggleMute() {
+      video.muted = !video.muted;
+      if (video.muted) {
+          muteBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+          volumeSlider.value = 0;
+      } else {
+          muteBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+          volumeSlider.value = video.volume;
+      }
+  }
+  muteBtn.addEventListener("click", toggleMute);
+
+  volumeSlider.addEventListener("input", (e) => {
+      video.volume = e.target.value;
+      video.muted = (video.volume === 0);
+      if (video.muted) {
+          muteBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+      } else {
+          muteBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+      }
+  });
+
+  // Speed selector
+  speedSelect.addEventListener("change", (e) => {
+      video.playbackRate = parseFloat(e.target.value);
+  });
+
+  // Seek bar
+  progressBar.addEventListener("click", (e) => {
+      const scrubTime = (e.offsetX / progressBar.offsetWidth) * video.duration;
+      video.currentTime = scrubTime;
+  });
+
+  // Theater Mode Toggle
+  theaterBtn.addEventListener("click", () => {
+      document.body.classList.toggle("cinema-mode");
+      playerWrapper.style.maxWidth = document.body.classList.contains("cinema-mode") ? "100%" : "";
+  });
+
+  // Fullscreen Toggle
+  fullscreenBtn.addEventListener("click", () => {
+      if (!document.fullscreenElement) {
+          playerWrapper.requestFullscreen().catch(err => {
+              alert(`Error al entrar en pantalla completa: ${err.message}`);
+          });
+      } else {
+          document.exitFullscreen();
+      }
+  });
+
+  // --- PLAYLIST LOADING AND ROUTING ---
+  function cargarPlaylist() {
+      const container = document.getElementById("playlist-container");
+      container.innerHTML = "";
+
+      STREAM_CATALOG.forEach(stream => {
+          const card = document.createElement("div");
+          card.className = "stream-card";
+          card.setAttribute("data-id", stream.id);
+
+          const badgeClass = stream.type === "live" ? "live" : "vod";
+          const badgeText = stream.type === "live" ? "En Vivo" : "Grabación";
+
+          card.innerHTML = `
+              <div class="stream-thumb-wrapper">
+                  <img class="stream-thumb" src="${stream.thumbnail}" alt="${stream.title}">
+                  <span class="stream-card-badge ${badgeClass}">${badgeText}</span>
+              </div>
+              <div class="stream-card-info">
+                  <h4 class="stream-card-title">${stream.title}</h4>
+                  <div class="stream-card-views" id="sidebar-views-${stream.id}">
+                      <i class="fas fa-eye"></i> ... vistas
+                  </div>
+              </div>
+          `;
+
+          card.addEventListener("click", () => {
+              window.abrirStream(stream.id);
+          });
+
+          container.appendChild(card);
+          window.escucharVisitasStreamIndividual(stream.id, card.querySelector(`#sidebar-views-${stream.id}`));
+      });
+
+      // Route to correct stream or default to first
+      let startingStreamId = STREAM_CATALOG[0].id;
+      if (window.location.hash.startsWith("#stream=")) {
+          const hashId = window.location.hash.replace("#stream=", "");
+          if (STREAM_CATALOG.some(s => s.id === hashId)) {
+              startingStreamId = hashId;
+          }
+      }
+      window.abrirStream(startingStreamId);
+  }
+
+  // --- LIKE MAIN VIDEO / STREAM ---
+  document.getElementById("btn-like-video").addEventListener("click", (e) => {
+      if (!streamActual) return;
+      const key = `likes_stream_${streamActual.id}`;
+      const yaTieneLike = localStorage.getItem(key) === "true";
+      const refLikes = ref(database, 'likes_streams/' + streamActual.id);
+
+      if (!yaTieneLike) {
+          localStorage.setItem(key, "true");
+          e.currentTarget.classList.add("active");
+          e.currentTarget.innerHTML = '<i class="fas fa-thumbs-up"></i> Te gusta';
+          window.crearEfectoLluviaCorazones(e);
+          runTransaction(refLikes, (actual) => (actual || 0) + 1);
+      } else {
+          localStorage.removeItem(key);
+          e.currentTarget.classList.remove("active");
+          e.currentTarget.innerHTML = '<i class="fas fa-thumbs-up"></i> Me gusta';
+          runTransaction(refLikes, (actual) => {
+              let nuevoValor = (actual || 0) - 1;
+              return nuevoValor < 0 ? 0 : nuevoValor;
+          });
+      }
+  });
+
+  // Share button action
+  document.getElementById("btn-share-video").addEventListener("click", () => {
+      if (!streamActual) return;
+      const shareUrl = window.location.href;
+      if (navigator.clipboard) {
+          navigator.clipboard.writeText(shareUrl).then(() => {
+              alert("¡Enlace copiado al portapapeles para compartir!");
+          }).catch(() => {
+              alert(`Copia este enlace: ${shareUrl}`);
+          });
+      } else {
+          alert(`Copia este enlace: ${shareUrl}`);
+      }
+  });
+
+  // --- FORM SUBMIT COMMENTS ---
+  document.getElementById("formulario-comentario").addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (streamActual) {
+          window.intentarPublicarComentario(streamActual.id, document.getElementById("comentario-nombre").value, document.getElementById("comentario-texto").value);
+          document.getElementById("comentario-texto").value = "";
+      }
+  });
+
+  document.getElementById("btn-cancel-reply").addEventListener("click", window.cancelReply);
+
+  // --- SUSCRIPTORES ---
+  const btnFollow = document.getElementById("btn-toggle-follow");
+  const formFollow = document.getElementById("form-follow");
+
+  const actualizarEstadoSuscripcion = () => {
+      const estaSuscrito = localStorage.getItem("mizuvichi_suscrito") === "true";
+      if (estaSuscrito) {
+          btnFollow.classList.add("subscribed");
+          btnFollow.innerHTML = '<i class="fas fa-check-circle"></i> Suscrito';
+      } else {
+          btnFollow.classList.remove("subscribed");
+          btnFollow.innerHTML = '<i class="fas fa-bell"></i> Seguir';
+      }
+  };
+
+  if (btnFollow && formFollow) {
+      actualizarEstadoSuscripcion();
+      btnFollow.onclick = (e) => {
+          e.stopPropagation();
+          const estaSuscrito = localStorage.getItem("mizuvichi_suscrito") === "true";
+          if (estaSuscrito) {
+              if (confirm("¿Estás seguro de que quieres desuscribirte?")) {
+                  const email = localStorage.getItem("mizuvichi_email");
+                  if (email) {
+                      const emailKey = btoa(email).replace(/\//g, '_').replace(/\+/g, '-').replace(/=/g, '');
+                      const refSub = ref(database, 'subscriptores/' + emailKey);
+                      remove(refSub).then(() => {
+                          localStorage.removeItem("mizuvichi_suscrito");
+                          localStorage.removeItem("mizuvichi_email");
+                          actualizarEstadoSuscripcion();
+                          alert("Te has desuscrito correctamente.");
+                      });
+                  } else {
+                      localStorage.removeItem("mizuvichi_suscrito");
+                      actualizarEstadoSuscripcion();
+                  }
+              }
+          } else {
+              formFollow.classList.toggle("active");
+          }
+      };
+      document.addEventListener("click", (e) => {
+          if (!formFollow.contains(e.target) && e.target !== btnFollow) {
+              formFollow.classList.remove("active");
+          }
+      });
+  }
+
+  if (formFollow) {
+      formFollow.onsubmit = (e) => {
+          e.preventDefault();
+          const emailInput = document.getElementById("follow-email");
+          const email = emailInput.value.trim().toLowerCase();
+          if (email) {
+              const emailKey = btoa(email).replace(/\//g, '_').replace(/\+/g, '-').replace(/=/g, '');
+              const refSub = ref(database, 'subscriptores/' + emailKey);
+
+              set(refSub, {
+                  email: email,
+                  fecha: serverTimestamp(),
+                  activo: true
+              }).then(() => {
+                  localStorage.setItem("mizuvichi_suscrito", "true");
+                  localStorage.setItem("mizuvichi_email", email);
+                  actualizarEstadoSuscripcion();
+                  alert("¡Gracias! Te avisaremos cuando haya novedades de streams o capítulos.");
+                  formFollow.reset();
+                  formFollow.classList.remove("active");
+              }).catch(() => {
+                  alert("Error al suscribirse. Inténtalo de nuevo.");
+              });
+          }
+      };
+  }
+
+  // --- INITIALIZATION ---
+  window.addEventListener("DOMContentLoaded", () => {
+      window.registrarVisitaStreaming();
+      window.escucharVisitasGlobales();
+      cargarPlaylist();
+      window.verificarYBloquearNombre();
+  });
+</script>
+
+</body>
+</html>
