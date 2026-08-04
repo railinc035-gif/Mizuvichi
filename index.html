@@ -701,6 +701,281 @@ header:hover .online-counter, header:active .online-counter {
     color: #ff0000;
     text-shadow: 0 0 10px #ff0000;
 }
+
+/* ==========================================================================
+   ESTILOS DE LA GALERÍA (ESTILO MANGA PLUS)
+   ========================================================================== */
+.tabs-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 30px auto 20px auto;
+    width: 95%;
+    max-width: 1000px;
+}
+
+.tab-btn {
+    background: #111;
+    color: #888;
+    border: 2px solid #200000;
+    padding: 10px 25px;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tab-btn:hover {
+    color: #fff;
+    border-color: #ff0000;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
+}
+
+.tab-btn.active[data-tab="manga"] {
+    background: #ff0000;
+    color: #000;
+    border-color: #ff0000;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+}
+
+.tab-btn.active[data-tab="one-shot"] {
+    background: #00ff66;
+    color: #000;
+    border-color: #00ff66;
+    box-shadow: 0 0 15px rgba(0, 255, 102, 0.6);
+}
+
+.tab-btn[data-tab="one-shot"]:hover {
+    border-color: #00ff66;
+    box-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
+}
+
+.gallery-section {
+    display: none;
+    width: 100%;
+}
+
+.gallery-section.active {
+    display: block;
+    animation: fadeIn 0.4s ease;
+}
+
+.series-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.series-card {
+    background: #0a0a0a;
+    border: 2px solid #1a1a1a;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.series-card:hover {
+    transform: translateY(-5px);
+    border-color: #ff0000;
+    box-shadow: 0 10px 20px rgba(255, 0, 0, 0.2);
+}
+
+.series-card[data-type="one-shot"]:hover {
+    border-color: #00ff66;
+    box-shadow: 0 10px 20px rgba(0, 255, 102, 0.2);
+}
+
+.series-cover-wrapper {
+    position: relative;
+    width: 100%;
+    padding-top: 140%; /* Poster aspect ratio */
+    overflow: hidden;
+    background: #050505;
+}
+
+.series-cover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.series-card:hover .series-cover {
+    transform: scale(1.05);
+}
+
+.series-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border: 1px solid #ff0000;
+    color: #ff0000;
+    z-index: 5;
+}
+
+.series-badge.one-shot {
+    border-color: #00ff66;
+    color: #00ff66;
+}
+
+.series-info {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-grow: 1;
+}
+
+.series-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fff;
+    margin: 0;
+}
+
+.series-author {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+/* ==========================================================================
+   ESTILOS DE DETALLE DE SERIE
+   ========================================================================== */
+.series-detail-container {
+    display: none;
+    width: 95%;
+    max-width: 1000px;
+    margin: 25px auto;
+    animation: fadeIn 0.4s ease;
+}
+
+.back-btn-container {
+    margin-bottom: 20px;
+}
+
+.back-btn {
+    background: #111;
+    border: 1px solid #333;
+    color: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    transition: all 0.2s;
+    padding: 8px 16px;
+    border-radius: 20px;
+}
+
+.back-btn:hover {
+    color: #fff;
+    background: #222;
+    border-color: #ff0000;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+}
+
+.series-header-layout {
+    display: flex;
+    gap: 25px;
+    margin-bottom: 30px;
+    background: linear-gradient(135deg, #0f0f0f 0%, #050505 100%);
+    border: 1px solid #1a1a1a;
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.series-detail-poster-wrapper {
+    width: 150px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #222;
+}
+
+.series-detail-poster {
+    width: 100%;
+    display: block;
+    aspect-ratio: 0.75;
+    object-fit: cover;
+}
+
+.series-detail-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+}
+
+.series-detail-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+
+.series-detail-meta {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.series-detail-author {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.series-detail-desc {
+    color: #ccc;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    max-width: 700px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+    .series-header-layout {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .series-detail-poster-wrapper {
+        width: 130px;
+    }
+    .series-detail-title {
+        font-size: 1.5rem;
+    }
+    .series-detail-meta {
+        justify-content: center;
+    }
+}
 </style>
 </head>
 
@@ -731,15 +1006,62 @@ header:hover .online-counter, header:active .online-counter {
     </div>
 </header>
 
-<div class="section">
+<div class="section" id="aviso-section">
     <div class="info-box" id="aviso-container"></div>
 </div>
 
-<div class="section">
-    <h2>📖 CAPÍTULOS</h2>
-    <div id="chapters"></div>
+<!-- VISTA PRINCIPAL: GALERÍA DE SERIES -->
+<div class="section" id="gallery-home-section">
+    <div class="tabs-container" id="gallery-tabs">
+        <button class="tab-btn active" data-tab="manga">
+            <i class="fas fa-book-open"></i> Manga
+        </button>
+        <button class="tab-btn" data-tab="one-shot">
+            <i class="fas fa-magic"></i> One Shot
+        </button>
+    </div>
+
+    <div id="gallery-container">
+        <!-- Vista Manga -->
+        <div class="gallery-section active" id="sec-manga">
+            <div class="series-grid" id="grid-manga"></div>
+        </div>
+        
+        <!-- Vista One Shot -->
+        <div class="gallery-section" id="sec-one-shot">
+            <div class="series-grid" id="grid-one-shot"></div>
+        </div>
+    </div>
 </div>
 
+<!-- VISTA DETALLE: INFO DE SERIE Y CAPÍTULOS -->
+<div class="series-detail-container" id="series-detail-container">
+    <div class="back-btn-container">
+        <button class="back-btn" id="btn-back-gallery">
+            <i class="fas fa-arrow-left"></i> Volver a la Galería
+        </button>
+    </div>
+    
+    <div class="series-header-layout">
+        <div class="series-detail-poster-wrapper">
+            <img class="series-detail-poster" id="series-poster" src="" alt="Cover">
+        </div>
+        <div class="series-detail-content">
+            <h2 class="series-detail-title" id="series-title">Título de la Serie</h2>
+            <div class="series-detail-meta">
+                <span class="series-detail-author" id="series-author">Autor: ...</span>
+            </div>
+            <p class="series-detail-desc" id="series-desc">Descripción...</p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2 id="chapters-section-title">📖 CAPÍTULOS</h2>
+        <div id="chapters"></div>
+    </div>
+</div>
+
+<!-- VISOR / LECTOR DE CAPÍTULOS -->
 <div id="viewer-container">
     <div class="viewer-nav" id="viewer-nav">
         <button class="viewer-btn" id="btn-prev">◀ Ant</button>
@@ -1082,9 +1404,9 @@ header:hover .online-counter, header:active .online-counter {
 
   window.intentarPublicarComentario = function(nombreCap, autor, texto) {
       let esAutorReal = false;
-      const nombreLimpio = autor.trim();
+      const nameLimpio = autor.trim();
 
-      if (nombreLimpio === "Raylin AC") {
+      if (nameLimpio === "Raylin AC") {
           if (localStorage.getItem("autor_autenticado") === "true") {
               esAutorReal = true;
           } else {
@@ -1099,7 +1421,7 @@ header:hover .online-counter, header:active .online-counter {
               }
           }
       } else if (!localStorage.getItem("mi_nombre_fijo")) {
-          localStorage.setItem("mi_nombre_fijo", nombreLimpio);
+          localStorage.setItem("mi_nombre_fijo", nameLimpio);
           window.verificarYBloquearNombre();
       }
 
@@ -1236,45 +1558,338 @@ header:hover .online-counter, header:active .online-counter {
       } catch (error) { contenedorAvisos.parentElement.style.display = "none"; }
   }
 
-  async function cargarCapitulos(){
-      const contenedor = document.getElementById("chapters");
+  // --- LÓGICA DE LA GALERÍA MANGA PLUS ---
+
+  const seriesData = {
+      "thalesis": {
+          id: "thalesis",
+          title: "Thalesis",
+          type: "manga",
+          cover: "https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png",
+          description: "Un manga intrigante y misterioso. Sumérgete en el oscuro y fascinante mundo de Thalesis y desvela sus grandes enigmas.",
+          author: "Raylin AC",
+          chapters: []
+      },
+      "mizuvichi": {
+          id: "mizuvichi",
+          title: "Mizuvichi",
+          type: "one-shot",
+          cover: "https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png",
+          description: "Una obra única auto-conclusiva (One Shot) que te atrapará con su increíble arte y profunda narrativa.",
+          author: "Raylin AC",
+          chapters: []
+      }
+  };
+
+  let activeSeriesId = null;
+
+  async function inicializarGaleria() {
       try {
           const respuesta = await fetch(api);
           const archivos = await respuesta.json();
-          const capitulos = archivos.filter(item => item.type === "dir" && item.name.startsWith("Cap_")).sort((a,b)=> b.name.localeCompare(a.name));
 
-          for(const cap of capitulos){
-              const capApi = `${api}/${cap.name}`;
-              const capResp = await fetch(capApi);
-              const paginas = await capResp.json();
+          // Reiniciamos los capítulos de las series predefinidas
+          seriesData.thalesis.chapters = [];
+          seriesData.mizuvichi.chapters = [];
+
+          // Identificar si existen carpetas de categoría: "manga" o "one shot" (o similares)
+          const mangaCatDir = archivos.find(item => item.type === "dir" && /^manga[s]?$/i.test(item.name));
+          const oneShotCatDir = archivos.find(item => item.type === "dir" && /^(one[-_\s]?shot[s]?|one)$/i.test(item.name));
+
+          // Guardamos qué carpetas procesaremos de forma especial para no duplicarlas en la compatibilidad hacia atrás
+          const especialDirs = ["aviso", "scripts", ".github"];
+          if (mangaCatDir) especialDirs.push(mangaCatDir.name.toLowerCase());
+          if (oneShotCatDir) especialDirs.push(oneShotCatDir.name.toLowerCase());
+
+          // 1. Procesar carpeta de categoría MANGA
+          if (mangaCatDir) {
+              const r = await fetch(`${api}/${encodeURIComponent(mangaCatDir.name)}`);
+              const subFolders = await r.json();
+              const seriesDirs = subFolders.filter(item => item.type === "dir");
+
+              for (const sDir of seriesDirs) {
+                  const sId = sDir.name.toLowerCase().replace(/[\s-_]+/g, "_");
+                  if (!seriesData[sId]) {
+                      seriesData[sId] = {
+                          id: sId,
+                          title: sDir.name.replace(/_/g, " ").replace(/-/g, " "),
+                          type: "manga",
+                          cover: "https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png", // fallback
+                          description: `Una increíble obra titulada ${sDir.name.replace(/_/g, " ").replace(/-/g, " ")}. ¡Disfrútala en la galería!`,
+                          author: "Raylin AC",
+                          chapters: []
+                      };
+                  }
+
+                  // Obtenemos los elementos directamente dentro de la carpeta de la serie
+                  const r2 = await fetch(`${api}/${encodeURIComponent(mangaCatDir.name)}/${encodeURIComponent(sDir.name)}`);
+                  const sItems = await r2.json();
+
+                  // Comprobamos si tiene imágenes PNG directamente dentro
+                  const directPngs = sItems.filter(p => p.type === "file" && p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
+
+                  if (directPngs.length > 0) {
+                      // Si hay imágenes directas, es un capítulo único directo
+                      seriesData[sId].chapters.push({ name: "Capítulo Único", images: directPngs });
+                  } else {
+                      // Si no, escaneamos las subcarpetas como capítulos
+                      const validCapDirs = sItems.filter(item => item.type === "dir");
+
+                      for (const cDir of validCapDirs) {
+                          const r3 = await fetch(`${api}/${encodeURIComponent(mangaCatDir.name)}/${encodeURIComponent(sDir.name)}/${encodeURIComponent(cDir.name)}`);
+                          const subFiles = await r3.json();
+                          const pngs = subFiles.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
+                          if (pngs.length === 0) continue;
+
+                          seriesData[sId].chapters.push({ name: cDir.name, images: pngs });
+                      }
+                  }
+              }
+          }
+
+          // 2. Procesar carpeta de categoría ONE SHOT
+          if (oneShotCatDir) {
+              const r = await fetch(`${api}/${encodeURIComponent(oneShotCatDir.name)}`);
+              const subFolders = await r.json();
+              const seriesDirs = subFolders.filter(item => item.type === "dir");
+
+              for (const sDir of seriesDirs) {
+                  const sId = sDir.name.toLowerCase().replace(/[\s-_]+/g, "_");
+                  if (!seriesData[sId]) {
+                      seriesData[sId] = {
+                          id: sId,
+                          title: sDir.name.replace(/_/g, " ").replace(/-/g, " "),
+                          type: "one-shot",
+                          cover: "https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png", // fallback
+                          description: `Un increíble One Shot titulado ${sDir.name.replace(/_/g, " ").replace(/-/g, " ")}.`,
+                          author: "Raylin AC",
+                          chapters: []
+                      };
+                  }
+
+                  // Obtenemos los elementos directamente dentro de la carpeta de la serie
+                  const r2 = await fetch(`${api}/${encodeURIComponent(oneShotCatDir.name)}/${encodeURIComponent(sDir.name)}`);
+                  const sItems = await r2.json();
+
+                  // Comprobamos si tiene imágenes PNG directamente dentro
+                  const directPngs = sItems.filter(p => p.type === "file" && p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
+
+                  if (directPngs.length > 0) {
+                      // Si hay imágenes directas, es un capítulo único directo (muy común en One Shots)
+                      seriesData[sId].chapters.push({ name: "Capítulo Único", images: directPngs });
+                  } else {
+                      // Si no, escaneamos las subcarpetas como capítulos
+                      const validCapDirs = sItems.filter(item => item.type === "dir");
+
+                      for (const cDir of validCapDirs) {
+                          const r3 = await fetch(`${api}/${encodeURIComponent(oneShotCatDir.name)}/${encodeURIComponent(sDir.name)}/${encodeURIComponent(cDir.name)}`);
+                          const subFiles = await r3.json();
+                          const pngs = subFiles.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
+                          if (pngs.length === 0) continue;
+
+                          seriesData[sId].chapters.push({ name: cDir.name, images: pngs });
+                      }
+                  }
+              }
+          }
+
+          // 3. Procesar carpetas en la raíz (compatibilidad hacia atrás)
+          const rootFolders = archivos.filter(item => item.type === "dir" && !especialDirs.includes(item.name.toLowerCase()) && !item.name.startsWith("."));
+
+          for (const folder of rootFolders) {
+              const folderApi = `${api}/${folder.name}`;
+              const folderResp = await fetch(folderApi);
+              const paginas = await folderResp.json();
               const pngs = paginas.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
-              if(pngs.length === 0) continue;
-              listaCapitulosGuardados.push({ name: cap.name, images: pngs });
+              if (pngs.length === 0) continue;
+
+              const chapterObj = { name: folder.name, images: pngs };
+
+              if (folder.name.startsWith("Cap_") || folder.name.startsWith("Manga_")) {
+                  seriesData.thalesis.chapters.push(chapterObj);
+              } else {
+                  seriesData.mizuvichi.chapters.push(chapterObj);
+              }
+          }
+
+          // Ordenar los capítulos de forma descendente en todas las series
+          Object.values(seriesData).forEach(series => {
+              series.chapters.sort((a, b) => b.name.localeCompare(a.name));
+              // Si tiene capítulos, actualizamos el cover dinámicamente con la primera página del primer capítulo
+              if (series.chapters.length > 0) {
+                  series.cover = series.chapters[series.chapters.length - 1].images[0].download_url;
+              }
+          });
+
+          // Renderizar tarjetas de series
+          renderizarTarjetasGaleria();
+
+          // Comprobar rutas en hash al cargar
+          comprobarRutasHash();
+
+      } catch (error) {
+          console.error("Error cargando la galería:", error);
+      }
+  }
+
+  function renderizarTarjetasGaleria() {
+      const gridManga = document.getElementById("grid-manga");
+      const gridOneShot = document.getElementById("grid-one-shot");
+
+      gridManga.innerHTML = "";
+      gridOneShot.innerHTML = "";
+
+      let countManga = 0;
+      let countOneShot = 0;
+
+      Object.values(seriesData).forEach(series => {
+          if (series.chapters.length === 0) {
+              return; // No mostramos series vacías en la galería
+          }
+
+          const card = document.createElement("div");
+          card.className = "series-card";
+          card.setAttribute("data-type", series.type);
+          card.innerHTML = `
+              <div class="series-cover-wrapper">
+                  <span class="series-badge ${series.type}">${series.type}</span>
+                  <img class="series-cover" src="${series.cover}" alt="${series.title}" loading="lazy">
+              </div>
+              <div class="series-info">
+                  <h3 class="series-title">${series.title}</h3>
+                  <span class="series-author">Por ${series.author}</span>
+              </div>
+          `;
+
+          card.addEventListener("click", () => {
+              irADetalleSerie(series.id);
+          });
+
+          if (series.type === "manga") {
+              gridManga.appendChild(card);
+              countManga++;
+          } else {
+              gridOneShot.appendChild(card);
+              countOneShot++;
+          }
+      });
+
+      if (countManga === 0) {
+          gridManga.innerHTML = `<p style="color: #666; font-size: 1.1rem; text-align: center; grid-column: 1 / -1; margin: 40px 0; font-style: italic;">No hay mangas disponibles por el momento.</p>`;
+      }
+      if (countOneShot === 0) {
+          gridOneShot.innerHTML = `<p style="color: #666; font-size: 1.1rem; text-align: center; grid-column: 1 / -1; margin: 40px 0; font-style: italic;">No hay One Shots disponibles por el momento.</p>`;
+      }
+  }
+
+  function irADetalleSerie(seriesId, scroll = true) {
+      activeSeriesId = seriesId;
+      window.location.hash = `serie=${seriesId}`;
+
+      const series = seriesData[seriesId];
+      if (!series) return;
+
+      document.getElementById("series-poster").src = series.cover;
+      document.getElementById("series-title").innerText = series.title;
+      document.getElementById("series-author").innerText = `Autor: ${series.author}`;
+      document.getElementById("series-desc").innerText = series.description;
+
+      // Renderizar capítulos de esta serie
+      const contenedorCapitulos = document.getElementById("chapters");
+      contenedorCapitulos.innerHTML = "";
+
+      // Copiamos la lista de capítulos de esta serie a la variable global listaCapitulosGuardados
+      // para que el visor pueda navegar secuencialmente entre ellos
+      listaCapitulosGuardados = series.chapters;
+
+      if (listaCapitulosGuardados.length === 0) {
+          contenedorCapitulos.innerHTML = `<p style="color:#666; font-size:1rem; text-align:center; margin:30px 0;">¡Próximamente nuevos capítulos!</p>`;
+      } else {
+          listaCapitulosGuardados.forEach((cap) => {
               const card = document.createElement("div");
               card.className = "chapter";
+              
+              // Determinar título del capítulo (sin numeración si es One Shot)
+              let tituloCap = "";
+              if (series.type === "one-shot") {
+                  tituloCap = "Leer One Shot";
+              } else {
+                  tituloCap = formatearNombreCapitulo(cap.name);
+              }
+
               card.innerHTML = `
               <div class="chapter-header">
                   <div class="chapter-left">
-                      <img class="chapter-thumb" src="${pngs[0].download_url}">
-                      <div><h3>${formatearNombreCapitulo(cap.name)}</h3><div class="chapter-views" id="views-${cap.name}">...</div></div>
+                      <img class="chapter-thumb" src="${cap.images[0].download_url}">
+                      <div><h3>${tituloCap}</h3><div class="chapter-views" id="views-${cap.name}">...</div></div>
                   </div>
                   <div>▶</div>
               </div>
               `;
-              card.querySelector(".chapter-header").addEventListener("click",()=>{
+              card.querySelector(".chapter-header").addEventListener("click", () => {
                   const index = listaCapitulosGuardados.findIndex(c => c.name === cap.name);
                   window.abrirVisor(index);
               });
-              contenedor.appendChild(card);
+              contenedorCapitulos.appendChild(card);
               window.escucharVisitasCapitulo(cap.name, card.querySelector(`#views-${cap.name}`));
-          }
-          if (window.location.hash.startsWith("#capitulo=")) {
-              const nombreCap = window.location.hash.replace("#capitulo=", "");
-              const index = listaCapitulosGuardados.findIndex(c => c.name === nombreCap);
-              if (index !== -1) window.abrirVisor(index);
-          }
-      } catch (error) { console.error(error); }
+          });
+      }
+
+      // Switch views
+      document.getElementById("gallery-home-section").style.display = "none";
+      document.getElementById("aviso-section").style.display = "none";
+      document.getElementById("series-detail-container").style.display = "block";
+
+      if (scroll) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
   }
+
+  function volverALagaleria() {
+      activeSeriesId = null;
+      history.pushState("", document.title, window.location.pathname + window.location.search);
+      document.getElementById("series-detail-container").style.display = "none";
+      document.getElementById("gallery-home-section").style.display = "block";
+      document.getElementById("aviso-section").style.display = "block";
+  }
+
+  function comprobarRutasHash() {
+      const hash = window.location.hash;
+      if (hash.startsWith("#capitulo=")) {
+          const nombreCap = hash.replace("#capitulo=", "");
+          // Buscamos a qué serie pertenece
+          let serieEncontrada = null;
+          let capIndex = -1;
+
+          for (const sId in seriesData) {
+              const idx = seriesData[sId].chapters.findIndex(c => c.name === nombreCap);
+              if (idx !== -1) {
+                  serieEncontrada = sId;
+                  capIndex = idx;
+                  break;
+              }
+          }
+
+          if (serieEncontrada && capIndex !== -1) {
+              irADetalleSerie(serieEncontrada, false);
+              window.abrirVisor(capIndex);
+          }
+      } else if (hash.startsWith("#serie=")) {
+          const seriesId = hash.replace("#serie=", "");
+          if (seriesData[seriesId]) {
+              irADetalleSerie(seriesId);
+          }
+      } else {
+          // Si no hay hash de detalle o visor, nos aseguramos de mostrar la galería
+          document.getElementById("viewer-container").style.display = "none";
+          document.body.style.overflow = "auto";
+          document.getElementById("series-detail-container").style.display = "none";
+          document.getElementById("gallery-home-section").style.display = "block";
+          document.getElementById("aviso-section").style.display = "block";
+      }
+  }
+
+  window.addEventListener("hashchange", comprobarRutasHash);
 
   window.abrirVisor = function(index, scrollAComentarios = false) {
       if (index < 0 || index >= listaCapitulosGuardados.length) return;
@@ -1283,7 +1898,15 @@ header:hover .online-counter, header:active .online-counter {
       const capitulo = listaCapitulosGuardados[indiceCapituloActual];
       window.location.hash = `capitulo=${capitulo.name}`;
       
-      const tituloFormateado = formatearNombreCapitulo(capitulo.name);
+      // Obtener serie activa para comprobar el tipo y omitir numeración si es One Shot
+      const activeSeries = seriesData[activeSeriesId];
+      let tituloFormateado = "";
+      if (activeSeries && activeSeries.type === "one-shot") {
+          tituloFormateado = activeSeries.title; // Sólo el título de la obra
+      } else {
+          tituloFormateado = formatearNombreCapitulo(capitulo.name);
+      }
+
       document.getElementById("viewer-title").innerText = tituloFormateado;
       document.getElementById("viewer-title-bottom").innerText = tituloFormateado;
 
@@ -1324,7 +1947,11 @@ header:hover .online-counter, header:active .online-counter {
   const cerrarVisor = () => {
       document.getElementById("viewer-container").style.display = "none";
       document.body.style.overflow = "auto";
-      history.pushState("", document.title, window.location.pathname + window.location.search);
+      if (activeSeriesId) {
+          window.location.hash = `serie=${activeSeriesId}`;
+      } else {
+          history.pushState("", document.title, window.location.pathname + window.location.search);
+      }
   };
 
   document.getElementById("btn-close").addEventListener("click", cerrarVisor);
@@ -1354,7 +1981,30 @@ header:hover .online-counter, header:active .online-counter {
       window.registrarVisitaInicio();
       window.escucharVisitasGlobales();
       cargarAvisos();
-      cargarCapitulos();
+      inicializarGaleria();
+
+      // Configuración de los botones de pestañas (Tabs)
+      const tabBtns = document.querySelectorAll(".tab-btn");
+      tabBtns.forEach(btn => {
+          btn.addEventListener("click", () => {
+              tabBtns.forEach(b => b.classList.remove("active"));
+              btn.classList.add("active");
+
+              const targetTab = btn.getAttribute("data-tab");
+              document.querySelectorAll(".gallery-section").forEach(sec => {
+                  sec.classList.remove("active");
+              });
+
+              if (targetTab === "manga") {
+                  document.getElementById("sec-manga").classList.add("active");
+              } else {
+                  document.getElementById("sec-one-shot").classList.add("active");
+              }
+          });
+      });
+
+      // Botón volver a galería
+      document.getElementById("btn-back-gallery").addEventListener("click", volverALagaleria);
 
       const btnFollow = document.getElementById("btn-toggle-follow");
       const formFollow = document.getElementById("form-follow");
@@ -1409,7 +2059,6 @@ header:hover .online-counter, header:active .online-counter {
               const emailInput = document.getElementById("follow-email");
               const email = emailInput.value.trim().toLowerCase();
               if (email) {
-                  // Codificamos el email para usarlo como llave y evitar duplicados
                   const emailKey = btoa(email).replace(/\//g, '_').replace(/\+/g, '-').replace(/=/g, '');
                   const refSub = ref(database, 'subscriptores/' + emailKey);
                   
