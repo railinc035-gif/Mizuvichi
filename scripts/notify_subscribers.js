@@ -1,1 +1,1166 @@
-const admin = require('firebase-admin'); const fs = require('fs'); const path = require('path'); const axios = require('axios'); // Inicializar Firebase Admin const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON); admin.initializeApp({ credential: admin.credential.cert(serviceAccount), databaseURL: "https://webmanga-7b2cb-default-rtdb.firebaseio.com" }); const db = admin.database(); async function notify() { console.log("Iniciando escaneo de contenido..."); // 1. Obtener carpetas actuales const repoPath = './'; const folders = fs.readdirSync(repoPath).filter(f => fs.statSync(path.join(repoPath, f)).isDirectory() && f.startsWith('Cap_') ); // 2. Obtener lista de Avisos const avisoPath = './Aviso'; let avisos = []; if (fs.existsSync(avisoPath)) { avisos = fs.readdirSync(avisoPath).filter(f => f.toLowerCase().endsWith('.png')); } // 3. Obtener metadatos de Firebase const metaRef = db.ref('metadatos_envios'); const snapshot = await metaRef.once('value'); const metadata = snapshot.val() || { capitulos: [], avisos: [] }; const nuevosCaps = folders.filter(f => !metadata.capitulos.includes(f)); const nuevosAvisos = avisos.filter(a => !metadata.avisos.includes(a)); if (nuevosCaps.length === 0 && nuevosAvisos.length === 0) { console.log("No hay contenido nuevo para notificar."); process.exit(0); } // 4. Obtener suscriptores const subsSnapshot = await db.ref('subscriptores').once('value'); const subscribers = subsSnapshot.val(); if (!subscribers) { console.log("No hay suscriptores registrados."); process.exit(0); } const emailList = Object.values(subscribers).map(s => ({ email: s.email })); // 5. Configuración de Brevo const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"; const BREVO_API_KEY = process.env.BREVO_API_KEY; const SENDER_EMAIL = process.env.EMAIL_FROM; // 6. Enviar notificaciones for (const cap of nuevosCaps) { const nombreCap = cap.replace('Cap_', 'Capítulo '); console.log(Enviando correos por ${nombreCap}...); try { await axios.post(BREVO_API_URL, { sender: { name: "Thalesis Manga", email: SENDER_EMAIL }, to: emailList, subject: 💥 ¡NUEVO CAPÍTULO! Lea el ${nombreCap} de Thalesis ahora, htmlContent: <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #0b0c10; color: #ffffff; padding: 40px 20px; text-align: center; max-width: 600px; margin: 0 auto; border: 2px solid #1f2833; border-radius: 12px;"> <!-- Encabezado de Marca --> <h1 style="color: #ff0055; font-size: 2.5rem; letter-spacing: 2px; margin-bottom: 5px; text-transform: uppercase; font-weight: 900;">THALESIS</h1> <p style="color: #66fcf1; font-size: 1rem; margin-top: 0; font-style: italic; letter-spacing: 1px;">Por Raylin AC</p> <hr style="border: 0; border-top: 1px solid #1f2833; margin: 30px 0;"> <!-- Cuerpo del Mensaje --> <h2 style="color: #ffffff; font-size: 1.5rem; font-weight: 700; margin-bottom: 15px;">¡Las páginas ya están listas, lector!</h2> <p style="color: #c5c6c7; font-size: 1.1rem; line-height: 1.6; margin-bottom: 30px;"> La historia continúa. El nuevo <strong style="color: #ff0055; font-size: 1.2rem;">${nombreCap}</strong> acaba de ser publicado de forma independiente en nuestra web oficial. ¡No dejes que nadie te lo cuente! </p> <!-- Botón de Acción Principal --> <div style="margin: 40px 0;"> <a href="https://railinc035-gif.github.io/Mizuvichi/#capitulo=${cap}" style="background-color: #ff0055; color: #ffffff; padding: 15px 35px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 1.2rem; display: inline-block; box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4); transition: transform 0.2s;"> ⚔️ LEER CAPÍTULO AHORA </a> </div> <hr style="border: 0; border-top: 1px solid #1f2833; margin: 30px 0;"> <!-- Pie de página y Privacidad --> <p style="font-size: 0.85rem; color: #45a29e; line-height: 1.5;"> Gracias por apoyar el manga independiente. Estás recibiendo este correo porque te suscribiste en nuestra plataforma web oficial. </p> <p style="font-size: 0.8rem; color: #666;"> Si deseas dejar de recibir avisos, puedes gestionar tu desuscripción directamente desde el panel de control de la web. </p> </div> }, { headers: { "api-key": BREVO_API_KEY, "Content-Type": "application/json" } }); } catch (e) { console.error(Error enviando capítulo: ${e.response ? e.response.data.message : e.message}); } } for (const aviso of nuevosAvisos) { console.log("Enviando correos por nuevo aviso..."); try { await axios.post(BREVO_API_URL, { sender: { name: "Thalesis Manga", email: SENDER_EMAIL }, to: emailList, subject: 📢 AVISO IMPORTANTE: Actualización del autor, htmlContent: <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #0b0c10; color: #ffffff; padding: 40px 20px; text-align: center; max-width: 600px; margin: 0 auto; border: 2px solid #1f2833; border-radius: 12px;"> <!-- Encabezado de Marca --> <h1 style="color: #66fcf1; font-size: 2.5rem; letter-spacing: 2px; margin-bottom: 5px; text-transform: uppercase; font-weight: 900;">THALESIS</h1> <p style="color: #45a29e; font-size: 1rem; margin-top: 0; font-style: italic; letter-spacing: 1px;">Por Raylin AC</p> <hr style="border: 0; border-top: 1px solid #1f2833; margin: 30px 0;"> <!-- Cuerpo del Mensaje --> <h2 style="color: #ffffff; font-size: 1.5rem; font-weight: 700; margin-bottom: 15px;">¡Hola lector! Hay novedades en el proyecto</h2> <p style="color: #c5c6c7; font-size: 1.1rem; line-height: 1.6; margin-bottom: 30px;"> Acabo de subir un nuevo comunicado oficial a la sección de <strong style="color: #66fcf1;">Avisos</strong> en la plataforma. Te recomiendo pasar a verlo para estar al tanto de los próximos pasos del manga. </p> <!-- Botón de Acción Principal --> <div style="margin: 40px 0;"> <a href="https://railinc035-gif.github.io/Mizuvichi/" style="background-color: #66fcf1; color: #0b0c10; padding: 15px 35px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 1.2rem; display: inline-block; box-shadow: 0 4px 15px rgba(102, 252, 241, 0.4); transition: transform 0.2s;"> 📢 VER AVISO EN LA WEB </a> </div> <hr style="border: 0; border-top: 1px solid #1f2833; margin: 30px 0;"> <!-- Pie de página y Privacidad --> <p style="font-size: 0.85rem; color: #45a29e; line-height: 1.5;"> Gracias por apoyar el manga independiente. Estás recibiendo este correo porque te suscribiste en nuestra plataforma web oficial. </p> <p style="font-size: 0.8rem; color: #666;"> Si deseas dejar de recibir avisos, puedes gestionar tu desuscripción directamente desde el panel de control de la web. </p> </div> }, { headers: { "api-key": BREVO_API_KEY, "Content-Type": "application/json" } }); } catch (e) { console.error(Error enviando aviso: ${e.response ? e.response.data.message : e.message}); } } // 7. Guardar metadatos await metaRef.set({ capitulos: folders, avisos: avisos, ultimaActualizacion: Date.now() }); console.log("¡Todo listo!"); process.exit(0); } notify().catch(err => { console.error(err); process.exit(1); });
+const admin = require("firebase-admin");
+const fs = require("fs");
+const path = require("path");
+const axios = require("axios");
+
+// =====================================================
+// FIREBASE
+// =====================================================
+
+const serviceAccount = JSON.parse(
+  process.env.FIREBASE_SERVICE_ACCOUNT_JSON
+);
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL:
+    "https://webmanga-7b2cb-default-rtdb.firebaseio.com"
+});
+
+const db = admin.database();
+
+// =====================================================
+// CONFIGURACIÓN
+// =====================================================
+
+const BREVO_API_URL =
+  "https://api.brevo.com/v3/smtp/email";
+
+const BREVO_API_KEY =
+  process.env.BREVO_API_KEY;
+
+const SENDER_EMAIL =
+  process.env.EMAIL_FROM;
+
+const WEBSITE_URL =
+  "https://railinc035-gif.github.io/Mizuvichi/";
+
+// Pausa entre correos.
+// Ayuda a evitar demasiadas solicitudes seguidas.
+const DELAY_BETWEEN_EMAILS = 800;
+
+
+// =====================================================
+// UTILIDADES
+// =====================================================
+
+function esperar(ms) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+}
+
+
+function obtenerCapitulos() {
+
+  return fs
+    .readdirSync("./")
+
+    .filter(nombre => {
+
+      const ruta =
+        path.join(
+          "./",
+          nombre
+        );
+
+      return (
+        fs.statSync(ruta).isDirectory() &&
+        nombre.startsWith("Cap_")
+      );
+
+    })
+
+    .sort((a, b) => {
+
+      return a.localeCompare(
+        b,
+        undefined,
+        {
+          numeric: true
+        }
+      );
+
+    });
+
+}
+
+
+function obtenerAvisos() {
+
+  const rutaAvisos =
+    "./Aviso";
+
+  if (
+    !fs.existsSync(
+      rutaAvisos
+    )
+  ) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(
+      rutaAvisos
+    )
+
+    .filter(nombre => {
+
+      const extension =
+        path
+          .extname(nombre)
+          .toLowerCase();
+
+      return [
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".webp"
+      ].includes(extension);
+
+    })
+
+    .sort((a, b) => {
+
+      return a.localeCompare(
+        b,
+        undefined,
+        {
+          numeric: true
+        }
+      );
+
+    });
+
+}
+
+
+function obtenerCorreos(
+  subscribers
+) {
+
+  const correos =
+
+    Object
+      .values(
+        subscribers || {}
+      )
+
+      .map(usuario => {
+
+        return usuario?.email
+          ?.trim()
+          ?.toLowerCase();
+
+      })
+
+      .filter(email => {
+
+        if (!email) {
+          return false;
+        }
+
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+          .test(email);
+
+      });
+
+
+  return [
+    ...new Set(correos)
+  ];
+
+}
+
+
+// =====================================================
+// DISEÑO DEL CORREO
+// =====================================================
+
+function crearCorreoCapitulo(
+  nombreCapitulo,
+  enlace
+) {
+
+  return `
+<!DOCTYPE html>
+
+<html lang="es">
+
+<body
+style="
+margin:0;
+padding:0;
+background:#050505;
+font-family:
+Arial,
+Helvetica,
+sans-serif;
+"
+>
+
+<table
+width="100%"
+cellpadding="0"
+cellspacing="0"
+style="
+background:#050505;
+padding:35px 15px;
+"
+>
+
+<tr>
+
+<td
+align="center"
+>
+
+<table
+width="100%"
+cellpadding="0"
+cellspacing="0"
+style="
+max-width:600px;
+background:#0d0d0d;
+border:1px solid #2a0000;
+border-radius:15px;
+overflow:hidden;
+"
+>
+
+
+<!-- CABECERA -->
+
+<tr>
+
+<td
+align="center"
+style="
+padding:35px 20px;
+background:
+linear-gradient(
+135deg,
+#1a0000,
+#050505
+);
+border-bottom:
+2px solid #ff0000;
+"
+>
+
+<div
+style="
+color:#ff0000;
+font-size:12px;
+font-weight:bold;
+letter-spacing:5px;
+margin-bottom:12px;
+"
+>
+
+NUEVO LANZAMIENTO
+
+</div>
+
+<h1
+style="
+margin:0;
+color:#ffffff;
+font-size:34px;
+letter-spacing:3px;
+"
+>
+
+MIZUVICHI
+
+</h1>
+
+<p
+style="
+margin:10px 0 0;
+color:#777;
+font-size:13px;
+"
+>
+
+Manga independiente
+
+</p>
+
+</td>
+
+</tr>
+
+
+<!-- CONTENIDO -->
+
+<tr>
+
+<td
+align="center"
+style="
+padding:40px 28px;
+"
+>
+
+<h2
+style="
+margin:0 0 18px;
+color:#ffffff;
+font-size:25px;
+"
+>
+
+¡${nombreCapitulo}
+ya está disponible!
+
+</h2>
+
+<p
+style="
+margin:0;
+color:#a8a8a8;
+font-size:16px;
+line-height:1.7;
+"
+>
+
+La historia continúa.
+
+<br><br>
+
+El nuevo capítulo ya fue publicado
+en la plataforma oficial de
+<strong
+style="
+color:#ffffff;
+"
+>
+
+MIZUVICHI
+
+</strong>.
+
+</p>
+
+
+<table
+cellpadding="0"
+cellspacing="0"
+style="
+margin-top:32px;
+"
+>
+
+<tr>
+
+<td
+align="center"
+style="
+background:#ff0000;
+border-radius:7px;
+"
+>
+
+<a
+href="${enlace}"
+style="
+display:inline-block;
+padding:16px 32px;
+color:#ffffff;
+font-size:15px;
+font-weight:bold;
+text-decoration:none;
+"
+>
+
+📖 LEER CAPÍTULO
+
+</a>
+
+</td>
+
+</tr>
+
+</table>
+
+</td>
+
+</tr>
+
+
+<!-- PIE -->
+
+<tr>
+
+<td
+align="center"
+style="
+padding:25px;
+background:#080808;
+border-top:
+1px solid #222;
+"
+>
+
+<p
+style="
+margin:0 0 10px;
+color:#666;
+font-size:12px;
+line-height:1.6;
+"
+>
+
+Recibes este correo porque
+te suscribiste a las novedades
+de MIZUVICHI.
+
+</p>
+
+<p
+style="
+margin:0;
+color:#444;
+font-size:11px;
+"
+>
+
+© ${new Date().getFullYear()}
+MIZUVICHI
+
+</p>
+
+</td>
+
+</tr>
+
+</table>
+
+</td>
+
+</tr>
+
+</table>
+
+</body>
+
+</html>
+`;
+
+}
+
+
+function crearCorreoAviso() {
+
+  return `
+<!DOCTYPE html>
+
+<html lang="es">
+
+<body
+style="
+margin:0;
+padding:0;
+background:#050505;
+font-family:
+Arial,
+Helvetica,
+sans-serif;
+"
+>
+
+<table
+width="100%"
+cellpadding="0"
+cellspacing="0"
+style="
+background:#050505;
+padding:35px 15px;
+"
+>
+
+<tr>
+
+<td
+align="center"
+>
+
+<table
+width="100%"
+cellpadding="0"
+cellspacing="0"
+style="
+max-width:600px;
+background:#0d0d0d;
+border:1px solid #003d19;
+border-radius:15px;
+overflow:hidden;
+"
+>
+
+
+<!-- CABECERA -->
+
+<tr>
+
+<td
+align="center"
+style="
+padding:35px 20px;
+background:
+linear-gradient(
+135deg,
+#001a0b,
+#050505
+);
+border-bottom:
+2px solid #00ff66;
+"
+>
+
+<div
+style="
+color:#00ff66;
+font-size:12px;
+font-weight:bold;
+letter-spacing:5px;
+margin-bottom:12px;
+"
+>
+
+COMUNICADO OFICIAL
+
+</div>
+
+<h1
+style="
+margin:0;
+color:#ffffff;
+font-size:34px;
+letter-spacing:3px;
+"
+>
+
+MIZUVICHI
+
+</h1>
+
+</td>
+
+</tr>
+
+
+<!-- CONTENIDO -->
+
+<tr>
+
+<td
+align="center"
+style="
+padding:40px 28px;
+"
+>
+
+<h2
+style="
+margin:0 0 18px;
+color:#ffffff;
+font-size:25px;
+"
+>
+
+Hay una nueva actualización
+
+</h2>
+
+<p
+style="
+margin:0;
+color:#a8a8a8;
+font-size:16px;
+line-height:1.7;
+"
+>
+
+Se publicó un nuevo aviso
+en la plataforma oficial.
+
+<br><br>
+
+Entra para conocer las novedades
+del proyecto.
+
+</p>
+
+
+<table
+cellpadding="0"
+cellspacing="0"
+style="
+margin-top:32px;
+"
+>
+
+<tr>
+
+<td
+align="center"
+style="
+background:#00ff66;
+border-radius:7px;
+"
+>
+
+<a
+href="${WEBSITE_URL}"
+style="
+display:inline-block;
+padding:16px 32px;
+color:#000000;
+font-size:15px;
+font-weight:bold;
+text-decoration:none;
+"
+>
+
+📢 VER AVISO
+
+</a>
+
+</td>
+
+</tr>
+
+</table>
+
+</td>
+
+</tr>
+
+
+<!-- PIE -->
+
+<tr>
+
+<td
+align="center"
+style="
+padding:25px;
+background:#080808;
+border-top:
+1px solid #222;
+"
+>
+
+<p
+style="
+margin:0;
+color:#666;
+font-size:12px;
+"
+>
+
+Gracias por seguir MIZUVICHI.
+
+</p>
+
+</td>
+
+</tr>
+
+</table>
+
+</td>
+
+</tr>
+
+</table>
+
+</body>
+
+</html>
+`;
+
+}
+
+
+// =====================================================
+// ENVIAR UN CORREO
+// =====================================================
+
+async function enviarUnoPorUno({
+  email,
+  asunto,
+  html,
+  texto
+}) {
+
+  await axios.post(
+
+    BREVO_API_URL,
+
+    {
+
+      sender: {
+
+        name:
+          "MIZUVICHI",
+
+        email:
+          SENDER_EMAIL
+
+      },
+
+      to: [
+
+        {
+
+          email:
+            email
+
+        }
+
+      ],
+
+      subject:
+        asunto,
+
+      htmlContent:
+        html,
+
+      textContent:
+        texto
+
+    },
+
+    {
+
+      headers: {
+
+        "api-key":
+          BREVO_API_KEY,
+
+        "Content-Type":
+          "application/json"
+
+      },
+
+      timeout:
+        30000
+
+    }
+
+  );
+
+}
+
+
+// =====================================================
+// ENVIAR A TODOS, UNO POR UNO
+// =====================================================
+
+async function enviarATodos(
+  emails,
+  asunto,
+  html,
+  texto
+) {
+
+  let enviados = 0;
+
+  let fallidos = 0;
+
+
+  for (
+    const email
+    of emails
+  ) {
+
+    try {
+
+      console.log(
+        `Enviando a: ${email}`
+      );
+
+
+      await enviarUnoPorUno({
+
+        email,
+
+        asunto,
+
+        html,
+
+        texto
+
+      });
+
+
+      enviados++;
+
+      console.log(
+        `✓ Enviado correctamente`
+      );
+
+
+    } catch (error) {
+
+      fallidos++;
+
+      console.error(
+
+        `✗ Error con ${email}:`,
+
+        error.response?.data ||
+        error.message
+
+      );
+
+    }
+
+
+    await esperar(
+      DELAY_BETWEEN_EMAILS
+    );
+
+  }
+
+
+  console.log(
+    `\nResultado: ` +
+    `${enviados} enviados, ` +
+    `${fallidos} fallidos.`
+  );
+
+
+  return {
+
+    enviados,
+
+    fallidos
+
+  };
+
+}
+
+
+// =====================================================
+// PROCESO PRINCIPAL
+// =====================================================
+
+async function notify() {
+
+  console.log(
+    "\n===== MIZUVICHI =====\n"
+  );
+
+
+  const capitulos =
+    obtenerCapitulos();
+
+
+  const avisos =
+    obtenerAvisos();
+
+
+  const metaRef =
+    db.ref(
+      "metadatos_envios"
+    );
+
+
+  const snapshot =
+    await metaRef.once(
+      "value"
+    );
+
+
+  const metadata =
+    snapshot.val() || {
+
+      capitulos: [],
+
+      avisos: []
+
+    };
+
+
+  const capitulosAnteriores =
+    Array.isArray(
+      metadata.capitulos
+    )
+      ? metadata.capitulos
+      : [];
+
+
+  const avisosAnteriores =
+    Array.isArray(
+      metadata.avisos
+    )
+      ? metadata.avisos
+      : [];
+
+
+  const nuevosCaps =
+
+    capitulos.filter(
+
+      cap =>
+
+        !capitulosAnteriores
+          .includes(cap)
+
+    );
+
+
+  const nuevosAvisos =
+
+    avisos.filter(
+
+      aviso =>
+
+        !avisosAnteriores
+          .includes(aviso)
+
+    );
+
+
+  console.log(
+    `Capítulos nuevos: ` +
+    nuevosCaps.length
+  );
+
+
+  console.log(
+    `Avisos nuevos: ` +
+    nuevosAvisos.length
+  );
+
+
+  if (
+
+    nuevosCaps.length === 0 &&
+
+    nuevosAvisos.length === 0
+
+  ) {
+
+    console.log(
+      "No hay contenido nuevo."
+    );
+
+    return;
+
+  }
+
+
+  const subsSnapshot =
+
+    await db
+
+      .ref(
+        "subscriptores"
+      )
+
+      .once(
+        "value"
+      );
+
+
+  const subscribers =
+
+    subsSnapshot.val();
+
+
+  const emails =
+
+    obtenerCorreos(
+      subscribers
+    );
+
+
+  console.log(
+    `Suscriptores: ` +
+    emails.length
+  );
+
+
+  if (
+    emails.length === 0
+  ) {
+
+    console.log(
+      "No hay correos válidos."
+    );
+
+    return;
+
+  }
+
+
+  const capitulosEnviados = [];
+
+  const avisosEnviados = [];
+
+
+  // CAPÍTULOS
+
+  for (
+    const cap
+    of nuevosCaps
+  ) {
+
+    const nombreCap =
+
+      cap.replace(
+        "Cap_",
+        "Capítulo "
+      );
+
+
+    const enlace =
+
+      `${WEBSITE_URL}` +
+      `#capitulo=` +
+      encodeURIComponent(cap);
+
+
+    const html =
+
+      crearCorreoCapitulo(
+
+        nombreCap,
+
+        enlace
+
+      );
+
+
+    const resultado =
+
+      await enviarATodos(
+
+        emails,
+
+        `📖 ${nombreCap} ya está disponible`,
+
+        html,
+
+        `${nombreCap} ya está disponible.
+
+Lee el capítulo:
+
+${enlace}`
+
+      );
+
+
+    // Solo se marca como enviado
+    // si todos los correos salieron bien.
+
+    if (
+      resultado.fallidos === 0
+    ) {
+
+      capitulosEnviados.push(
+        cap
+      );
+
+    }
+
+  }
+
+
+  // AVISOS
+
+  for (
+    const aviso
+    of nuevosAvisos
+  ) {
+
+    const html =
+
+      crearCorreoAviso();
+
+
+    const resultado =
+
+      await enviarATodos(
+
+        emails,
+
+        "📢 Nueva actualización en MIZUVICHI",
+
+        html,
+
+        `Hay un nuevo aviso.
+
+Visita:
+
+${WEBSITE_URL}`
+
+      );
+
+
+    if (
+      resultado.fallidos === 0
+    ) {
+
+      avisosEnviados.push(
+        aviso
+      );
+
+    }
+
+  }
+
+
+  // GUARDAR ESTADO
+
+  await metaRef.set({
+
+    capitulos: [
+
+      ...capitulosAnteriores,
+
+      ...capitulosEnviados
+
+    ],
+
+    avisos: [
+
+      ...avisosAnteriores,
+
+      ...avisosEnviados
+
+    ],
+
+    ultimaActualizacion:
+      Date.now()
+
+  });
+
+
+  console.log(
+    "\nProceso terminado."
+  );
+
+}
+
+
+notify()
+
+.catch(error => {
+
+  console.error(
+
+    "\nERROR GENERAL:",
+
+    error
+
+  );
+
+  process.exit(1);
+
+});
