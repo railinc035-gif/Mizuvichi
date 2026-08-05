@@ -30,4 +30,12 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
-        run: node scripts/notificar_suscriptores.js
+        run: |
+          FILE=$(find . -name "notificar_suscriptores.js" -not -path "*/node_modules/*" | head -n 1)
+          if [ -n "$FILE" ]; then
+            echo "Ejecutando: $FILE"
+            node "$FILE"
+          else
+            echo "No se encontró el archivo notificar_suscriptores.js"
+            exit 1
+          fi
