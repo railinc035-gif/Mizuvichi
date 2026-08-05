@@ -28,6 +28,6 @@ jobs:
       - name: Ejecutar script de notificación
         env:
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-        run: node scripts/notify_subscribers.js
+        run: node scripts/notificar_suscriptores.js
