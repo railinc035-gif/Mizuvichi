@@ -389,17 +389,50 @@ header:hover .online-counter, header:active .online-counter {
     padding: 0 10px;
 }
 
-.viewer-content img {
+.viewer-page-wrapper {
+    position: relative;
     width: 100%;
-    display: block;
+    aspect-ratio: 0.707; /* Relación de aspecto estándar para manga (A4/B5) para evitar saltos de diseño (CLS) */
+    background: #0a0a0a;
     margin-bottom: 30px; 
     border-radius: 6px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7); 
     border: 1px solid #111; 
-    image-rendering: -webkit-optimize-contrast;
-    backface-visibility: hidden;
-    transform: translateZ(0);
-    will-change: transform; /* Pista de optimización de rendimiento GPU */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.viewer-page-wrapper img {
+    width: 100%;
+    height: auto;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.viewer-page-wrapper img.loaded {
+    opacity: 1;
+}
+
+/* Spinner de carga elegante ("bolita de carga") estilo premium */
+.loading-spinner {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 0, 0, 0.1);
+    border-left-color: #ff0000;
+    border-radius: 50%;
+    animation: spin-loader 1s linear infinite;
+    z-index: 1;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+@keyframes spin-loader {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* ==========================================================================
@@ -1054,10 +1087,10 @@ header:hover .online-counter, header:active .online-counter {
 <div class="section" id="gallery-home-section">
     <div class="tabs-container" id="gallery-tabs">
         <button class="tab-btn active" data-tab="manga">
-            <i class="fas fa-book-open"></i>Manga
+            <i class="fas fa-book-open"></i> Manga
         </button>
         <button class="tab-btn" data-tab="one-shot">
-            <i class="fas fa-magic"></i>One Shot
+            <i class="fas fa-magic"></i> One Shot
         </button>
     </div>
 
@@ -1096,7 +1129,7 @@ header:hover .online-counter, header:active .online-counter {
     </div>
     
     <div class="section">
-        <h2 id="chapters-section-title">CAPÍTULOS</h2>
+        <h2 id="chapters-section-title">📖 CAPÍTULOS</h2>
         <div id="chapters"></div>
     </div>
 </div>
@@ -1189,6 +1222,18 @@ header:hover .online-counter, header:active .online-counter {
   const database = getDatabase(app);
 
   const CLAVE_SECRETA_AUTOR = "thalesis2026"; 
+
+  // --- OPTIMIZACIÓN DE CDN JSDELIVR ---
+  function obtenerUrlCDN(url) {
+      if (!url) return "";
+      if (url.includes("cdn.jsdelivr.net")) return url;
+      if (url.includes("raw.githubusercontent.com")) {
+          let nuevoUrl = url.replace("raw.githubusercontent.com", "cdn.jsdelivr.net/gh");
+          nuevoUrl = nuevoUrl.replace("/main/", "@main/").replace("/master/", "@master/");
+          return nuevoUrl;
+      }
+      return url;
+  }
 
   // --- SOLUCIÓN AL BUG DE SCROLL EN RECARGA ---
   history.scrollRestoration = 'manual';
@@ -1589,7 +1634,7 @@ header:hover .online-counter, header:active .online-counter {
                   setTimeout(() => { localStorage.setItem("ultimo_aviso_visto", idUltimoAviso); if (tag) tag.style.opacity = "0"; setTimeout(() => { if(tag) tag.style.display = "none"; }, 500); }, 10000);
               }
               const imageElement = document.createElement("img");
-              imageElement.src = img.download_url;
+              imageElement.src = obtenerUrlCDN(img.download_url);
               imageElement.loading = "lazy";
               imageElement.decoding = "async";
               wrapper.appendChild(imageElement);
@@ -1598,7 +1643,7 @@ header:hover .online-counter, header:active .online-counter {
       } catch (error) { contenedorAvisos.parentElement.style.display = "none"; }
   }
 
-  // --- LÓGICA DE LA GALERÍA ---
+  // --- LÓGICA DE LA GALERÍA MANGA PLUS ---
 
   const seriesData = {
       "thalesis": {
@@ -1606,8 +1651,8 @@ header:hover .online-counter, header:active .online-counter {
           title: "Thalesis",
           type: "manga",
           status: "pausa", // Valores: "emision" | "pausa" | "terminado"
-          cover: "https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png",
-          description: "Un manga intrigante y misterioso. Sumérgete en el oscuro y fascinante mundo de Thalesis y desvela sus grandes enigmas.",
+          cover: obtenerUrlCDN("https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png"),
+          description: "Taiga, un joven creado artificialmente en las profundas instalaciones de Aerin Thalesis, sobrevive con un único propósito: vengar a los amigos que vio morir en manos de sus creadores. Sin embargo, tras ser secuestrado de nuevo por el sádico Dr. Bachino, una verdad devastadora destruye su cordura.",
           author: "Raylin AC",
           chapters: []
       },
@@ -1616,7 +1661,7 @@ header:hover .online-counter, header:active .online-counter {
           title: "Mizuvichi",
           type: "one-shot",
           status: "terminado", // Valores: "emision" | "pausa" | "terminado"
-          cover: "https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png",
+          cover: obtenerUrlCDN("https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png"),
           description: "Una obra única auto-conclusiva (One Shot) que te atrapará con su increíble arte y profunda narrativa.",
           author: "Raylin AC",
           chapters: []
@@ -1657,7 +1702,7 @@ header:hover .online-counter, header:active .online-counter {
                           title: sDir.name.replace(/_/g, " ").replace(/-/g, " "),
                           type: "manga",
                           status: "emision", // Por defecto en emisión para nuevas series
-                          cover: "https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png", // fallback
+                          cover: obtenerUrlCDN("https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png"), // fallback
                           description: `Una increíble obra titulada ${sDir.name.replace(/_/g, " ").replace(/-/g, " ")}. ¡Disfrútala en la galería!`,
                           author: "Raylin AC",
                           chapters: []
@@ -1708,7 +1753,7 @@ header:hover .online-counter, header:active .online-counter {
                           title: sDir.name.replace(/_/g, " ").replace(/-/g, " "),
                           type: "one-shot",
                           status: "terminado", // One shots suelen considerarse terminados
-                          cover: "https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png", // fallback
+                          cover: obtenerUrlCDN("https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png"), // fallback
                           description: `Un increíble One Shot titulado ${sDir.name.replace(/_/g, " ").replace(/-/g, " ")}.`,
                           author: "Raylin AC",
                           chapters: []
@@ -1765,14 +1810,13 @@ header:hover .online-counter, header:active .online-counter {
               series.chapters.sort((a, b) => b.name.localeCompare(a.name));
               // Si tiene capítulos, actualizamos el cover dinámicamente con la primera página del primer capítulo
               if (series.chapters.length > 0) {
-                  series.cover = series.chapters[series.chapters.length - 1].images[0].download_url;
+                  series.cover = obtenerUrlCDN(series.chapters[series.chapters.length - 1].images[0].download_url);
               }
           });
 
           // Frases de índice literal para buscar fácilmente en el código fuente
           const listaDescripcionesFijas = [
-              "Taiga, un joven creado artificialmente en las profundas instalaciones de Aerin Thalesis, sobrevive con un único propósito: vengar a los amigos que vio morir en manos de sus creadores. Sin embargo, tras ser secuestrado de nuevo por el sádico Dr. Bachino, una verdad devastadora destruye su cordura...",
-
+              "Indice 01",
               "Indice 02",
               "Indice 03",
               "Indice 04",
@@ -1794,12 +1838,14 @@ header:hover .online-counter, header:active .online-counter {
               "Indice 20"
           ];
 
-          // Asignar descripción secuencial única para cada serie activa usando la lista literal
+          // Asignar descripción secuencial única para cada serie activa usando la lista literal (excepto Thalesis y Mizuvichi que tienen descripciones fijas personalizadas)
           let indexCounter = 0;
           Object.values(seriesData).forEach(series => {
               if (series.chapters.length > 0) {
-                  series.description = listaDescripcionesFijas[indexCounter] || `Indice ${String(indexCounter + 1).padStart(2, '0')}`;
-                  indexCounter++;
+                  if (series.id !== "thalesis" && series.id !== "mizuvichi") {
+                      series.description = listaDescripcionesFijas[indexCounter] || `Indice ${String(indexCounter + 1).padStart(2, '0')}`;
+                      indexCounter++;
+                  }
               }
           });
 
@@ -1871,7 +1917,7 @@ header:hover .online-counter, header:active .online-counter {
       const series = seriesData[seriesId];
       if (!series) return;
 
-      document.getElementById("series-poster").src = series.cover;
+      document.getElementById("series-poster").src = obtenerUrlCDN(series.cover);
       document.getElementById("series-title").innerText = series.title;
       document.getElementById("series-author").innerText = `Autor: ${series.author}`;
       document.getElementById("series-desc").innerText = series.description;
@@ -1927,7 +1973,7 @@ header:hover .online-counter, header:active .online-counter {
               card.innerHTML = `
               <div class="chapter-header">
                   <div class="chapter-left">
-                      <img class="chapter-thumb" src="${cap.images[0].download_url}">
+                      <img class="chapter-thumb" src="${obtenerUrlCDN(cap.images[0].download_url)}">
                       <div><h3>${tituloCap}</h3><div class="chapter-views" id="views-${cap.uniqueId}">...</div></div>
                   </div>
                   <div>▶</div>
@@ -2019,9 +2065,23 @@ header:hover .online-counter, header:active .online-counter {
 
       const contentDiv = document.getElementById("viewer-content");
       contentDiv.innerHTML = ""; 
+      
+      // Creamos un DocumentFragment para acumular todas las imágenes en memoria,
+      // evitando reflows intermedios y reduciendo drásticamente el uso de CPU/GPU.
+      const fragment = document.createDocumentFragment();
+      
       capitulo.images.forEach((img, i) => {
+          // Crear contenedor del wrapper de la página
+          const wrapper = document.createElement("div");
+          wrapper.className = "viewer-page-wrapper";
+
+          // Crear la "bolita de carga" (spinner)
+          const spinner = document.createElement("div");
+          spinner.className = "loading-spinner";
+          wrapper.appendChild(spinner);
+
+          // Crear la imagen
           const imageElement = document.createElement("img");
-          imageElement.src = img.download_url;
           imageElement.decoding = "async";
           
           if (i < 3) {
@@ -2030,9 +2090,45 @@ header:hover .online-counter, header:active .online-counter {
           } else {
               imageElement.loading = "lazy";
           }
-          
-          contentDiv.appendChild(imageElement);
+
+          // Función para manejar la finalización de carga de la imagen
+          const alCargarImagen = () => {
+              imageElement.classList.add("loaded");
+              spinner.style.opacity = "0";
+              // Eliminar el spinner del DOM después de la transición de opacidad
+              setTimeout(() => {
+                  if (spinner.parentNode) {
+                      spinner.remove();
+                  }
+              }, 300);
+
+              // Si la imagen tiene dimensiones válidas, ajustar aspect-ratio del contenedor
+              if (imageElement.naturalWidth && imageElement.naturalHeight) {
+                  const ratio = imageElement.naturalWidth / imageElement.naturalHeight;
+                  wrapper.style.aspectRatio = ratio;
+              }
+          };
+
+          imageElement.onload = alCargarImagen;
+          imageElement.onerror = () => {
+              // En caso de error, ocultamos el spinner para no bloquear visualmente
+              spinner.style.opacity = "0";
+              setTimeout(() => { if (spinner.parentNode) spinner.remove(); }, 300);
+          };
+
+          // Asignar el src después de configurar onload/onerror para asegurar captura de eventos
+          imageElement.src = obtenerUrlCDN(img.download_url);
+
+          // Si ya está en caché, se dispara manualmente la función de carga
+          if (imageElement.complete) {
+              alCargarImagen();
+          }
+
+          wrapper.appendChild(imageElement);
+          fragment.appendChild(wrapper);
       });
+      
+      contentDiv.appendChild(fragment);
       
       const esPrimero = indiceCapituloActual === 0;
       const esUltimo = indiceCapituloActual === listaCapitulosGuardados.length - 1;
