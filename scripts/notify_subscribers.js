@@ -1,7 +1,7 @@
 const admin = require("firebase-admin");
 const fs = require("fs");
 const path = require("path");
-const axios = require("axios");
+const nodemailer = require("nodemailer");
 
 // =====================================================
 // FIREBASE
@@ -20,22 +20,22 @@ admin.initializeApp({
 const db = admin.database();
 
 // =====================================================
-// CONFIGURACIÓN (RESEND)
+// CONFIGURACIÓN (GMAIL / NODEMAILER)
 // =====================================================
-
-const RESEND_API_URL =
-  "https://api.resend.com/emails";
-
-const RESEND_API_KEY =
-  process.env.RESEND_API_KEY;
-
-const SENDER_EMAIL =
-  process.env.EMAIL_FROM;
 
 const WEBSITE_URL =
   "https://railinc035-gif.github.io/Mizuvichi/";
 
 const DELAY_BETWEEN_EMAILS = 800;
+
+// Configuración del servidor de correo directo con Gmail
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS
+  }
+});
 
 
 // =====================================================
@@ -252,27 +252,17 @@ function crearCorreoAviso() {
 
 
 // =====================================================
-// ENVIAR UN CORREO (RESEND)
+// ENVIAR UN CORREO (DIRECTO CON GMAIL / NODEMAILER)
 // =====================================================
 
 async function enviarUnoPorUno({ email, asunto, html, texto }) {
-  await axios.post(
-    RESEND_API_URL,
-    {
-      from: `Mizuvichi <${SENDER_EMAIL}>`,
-      to: [email],
-      subject: asunto,
-      html: html,
-      text: texto
-    },
-    {
-      headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      timeout: 30000
-    }
-  );
+  await transporter.sendMail({
+    from: `"Mizuvichi" <${process.env.GMAIL_USER}>`,
+    to: email,
+    subject: asunto,
+    text: texto,
+    html: html
+  });
 }
 
 
@@ -294,7 +284,7 @@ async function enviarATodos(emails, asunto, html, texto) {
       fallidos++;
       console.error(
         `✗ Error con ${email}:`,
-        error.response?.data || error.message
+        error.message
       );
     }
 
