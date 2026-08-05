@@ -4,17 +4,57 @@ const path = require("path");
 const nodemailer = require("nodemailer");
 
 // =====================================================
-// FIREBASE
+// BÚSQUEDA AUTÓNOMA DE CREDENCIALES FIREBASE
 // =====================================================
 
-const serviceAccount = JSON.parse(
-  process.env.FIREBASE_SERVICE_ACCOUNT_JSON
-);
+function obtenerServiceAccount() {
+  // 1. Intentar leer la variable de entorno de GitHub Actions / servidor
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    try {
+      return JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    } catch (e) {
+      console.warn("⚠️ Error parsing FIREBASE_SERVICE_ACCOUNT_JSON env variable.");
+    }
+  }
+
+  // 2. Buscar dinámicamente cualquier archivo .json de credenciales en la raíz o subcarpetas
+  function buscarJsonServiceAccount(dir) {
+    const archivos = fs.readdirSync(dir);
+    for (const archivo of archivos) {
+      if (archivo === "node_modules" || archivo.startsWith(".")) continue;
+      const rutaCompleta = path.join(dir, archivo);
+      const stat = fs.statSync(rutaCompleta);
+
+      if (stat.isDirectory()) {
+        const resultado = buscarJsonServiceAccount(rutaCompleta);
+        if (resultado) return resultado;
+      } else if (archivo.endsWith(".json")) {
+        try {
+          const contenido = JSON.parse(fs.readFileSync(rutaCompleta, "utf8"));
+          if (contenido.type === "service_account" || contenido.project_id) {
+            console.log(`📌 Credenciales de Firebase encontradas en: ${rutaCompleta}`);
+            return contenido;
+          }
+        } catch (e) {
+          // Si no es un JSON válido o no se puede leer, ignorar
+        }
+      }
+    }
+    return null;
+  }
+
+  const encontrado = buscarJsonServiceAccount(process.cwd());
+  if (encontrado) return encontrado;
+
+  throw new Error("❌ No se encontraron credenciales de Firebase válidas ni en variables de entorno ni en archivos .json del proyecto.");
+}
+
+// Inicialización de Firebase Admin
+const serviceAccount = obtenerServiceAccount();
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL:
-    "https://webmanga-7b2cb-default-rtdb.firebaseio.com"
+  databaseURL: "https://webmanga-7b2cb-default-rtdb.firebaseio.com"
 });
 
 const db = admin.database();
@@ -23,12 +63,9 @@ const db = admin.database();
 // CONFIGURACIÓN (GMAIL / NODEMAILER)
 // =====================================================
 
-const WEBSITE_URL =
-  "https://railinc035-gif.github.io/Mizuvichi/";
-
+const WEBSITE_URL = "https://railinc035-gif.github.io/Mizuvichi/";
 const DELAY_BETWEEN_EMAILS = 800;
 
-// Configuración del servidor de correo directo con Gmail
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -37,274 +74,162 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-
 // =====================================================
-// UTILIDADES
+// BÚSQUEDA DINÁMICA DE CAPÍTULOS Y AVISOS
 // =====================================================
 
 function esperar(ms) {
-  return new Promise(resolve => {
-    setTimeout(resolve, ms);
-  });
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function obtenerCapitulos() {
-  return fs
-    .readdirSync("./")
-    .filter(nombre => {
-      const ruta = path.join("./", nombre);
-      return (
-        fs.statSync(ruta).isDirectory() &&
-        nombre.startsWith("Cap_")
-      );
-    })
-    .sort((a, b) => {
-      return a.localeCompare(b, undefined, { numeric: true });
-    });
-}
+// Busca carpetas 'Cap_' en cualquier nivel del proyecto
+function obtenerCapitulosDinamico(dir = process.cwd()) {
+  let capitulos = [];
+  const elementos = fs.readdirSync(dir);
 
-function obtenerAvisos() {
-  const rutaAvisos = "./Aviso";
-  if (!fs.existsSync(rutaAvisos)) {
-    return [];
+  for (const item of elementos) {
+    if (item === "node_modules" || item.startsWith(".")) continue;
+    const ruta = path.join(dir, item);
+    const stat = fs.statSync(ruta);
+
+    if (stat.isDirectory()) {
+      if (item.toLowerCase().startsWith("cap_")) {
+        capitulos.push(item);
+      } else {
+        capitulos = capitulos.concat(obtenerCapitulosDinamico(ruta));
+      }
+    }
   }
-  return fs
-    .readdirSync(rutaAvisos)
-    .filter(nombre => {
-      const extension = path.extname(nombre).toLowerCase();
-      return [".png", ".jpg", ".jpeg", ".webp"].includes(extension);
-    })
-    .sort((a, b) => {
-      return a.localeCompare(b, undefined, { numeric: true });
-    });
+
+  return [...new Set(capitulos)].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+}
+
+// Busca imágenes en carpetas de avisos en cualquier nivel del proyecto
+function obtenerAvisosDinamico(dir = process.cwd()) {
+  let avisos = [];
+  const elementos = fs.readdirSync(dir);
+
+  for (const item of elementos) {
+    if (item === "node_modules" || item.startsWith(".")) continue;
+    const ruta = path.join(dir, item);
+    const stat = fs.statSync(ruta);
+
+    if (stat.isDirectory()) {
+      if (item.toLowerCase().includes("aviso")) {
+        const fotos = fs.readdirSync(ruta).filter(f => {
+          const ext = path.extname(f).toLowerCase();
+          return [".png", ".jpg", ".jpeg", ".webp"].includes(ext);
+        });
+        avisos = avisos.concat(fotos);
+      } else {
+        avisos = avisos.concat(obtenerAvisosDinamico(ruta));
+      }
+    }
+  }
+
+  return [...new Set(avisos)].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 }
 
 function obtenerCorreos(subscribers) {
   const correos = Object.values(subscribers || {})
     .map(usuario => usuario?.email?.trim()?.toLowerCase())
-    .filter(email => {
-      if (!email) return false;
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    });
+    .filter(email => email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
 
   return [...new Set(correos)];
 }
 
-
 // =====================================================
-// DISEÑO PROFESIONAL DE PLANTILLAS
+// PLANTILLAS HTML
 // =====================================================
 
 function crearCorreoCapitulo(nombreCapitulo, enlace) {
   return `
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${nombreCapitulo} - Mizuvichi</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #0d0e12; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #e2e8f0;">
-  
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #0d0e12; font-family: sans-serif; color: #e2e8f0;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0d0e12; padding: 40px 10px;">
-    <tr>
-      <td align="center">
-        
-        <!-- Contenedor Principal -->
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 560px; background-color: #16181e; border-radius: 12px; border: 1px solid #262933; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-          
-          <!-- Encabezado / Logo -->
-          <tr>
-            <td align="center" style="padding: 32px 32px 24px 32px; border-bottom: 1px solid #262933; background: linear-gradient(180deg, #1f222b 0%, #16181e 100%);">
-              <span style="display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 3px; color: #ff3e3e; text-transform: uppercase; margin-bottom: 6px;">Oficial</span>
-              <h1 style="margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 2px; color: #ffffff;">MIZUVICHI</h1>
-            </td>
-          </tr>
-
-          <!-- Cuerpo -->
-          <tr>
-            <td style="padding: 36px 32px; text-align: left;">
-              <div style="display: inline-block; background-color: rgba(255, 62, 62, 0.1); border-left: 3px solid #ff3e3e; padding: 4px 12px; border-radius: 0 4px 4px 0; margin-bottom: 20px;">
-                <span style="font-size: 12px; font-weight: 600; color: #ff3e3e; text-transform: uppercase; letter-spacing: 1px;">Nuevo Capítulo</span>
-              </div>
-              
-              <h2 style="margin: 0 0 16px 0; font-size: 22px; font-weight: 700; color: #ffffff; line-height: 1.3;">
-                ¡${nombreCapitulo} ya está disponible!
-              </h2>
-
-              <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.6; color: #94a3b8;">
-                La historia continúa. Ya puedes acceder al contenido más reciente directamente en la plataforma oficial de Mizuvichi.
-              </p>
-
-              <!-- Botón de Acción -->
-              <table role="presentation" cellspacing="0" cellpadding="0" style="margin-top: 10px;">
-                <tr>
-                  <td align="center" style="border-radius: 8px; background-color: #ff3e3e;">
-                    <a href="${enlace}" target="_blank" style="display: inline-block; padding: 14px 28px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 8px; letter-spacing: 0.5px;">
-                      Leer capítulo ahora &rarr;
-                    </a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Pie de página -->
-          <tr>
-            <td style="padding: 24px 32px; background-color: #111216; border-top: 1px solid #262933; text-align: center;">
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: #64748b; line-height: 1.5;">
-                Recibes este correo porque te suscribiste a las actualizaciones de Mizuvichi.
-              </p>
-              <p style="margin: 0; font-size: 11px; color: #475569;">
-                &copy; ${new Date().getFullYear()} Mizuvichi. Todos los derechos reservados.
-              </p>
-            </td>
-          </tr>
-
-        </table>
-
-      </td>
-    </tr>
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 560px; background-color: #16181e; border-radius: 12px; border: 1px solid #262933; overflow: hidden;">
+        <tr><td align="center" style="padding: 32px; border-bottom: 1px solid #262933; background: #1f222b;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 3px; color: #ff3e3e; text-transform: uppercase;">Oficial</span>
+          <h1 style="margin: 6px 0 0 0; font-size: 26px; color: #ffffff;">MIZUVICHI</h1>
+        </td></tr>
+        <tr><td style="padding: 36px 32px;">
+          <h2 style="margin: 0 0 16px 0; font-size: 22px; color: #ffffff;">¡${nombreCapitulo} ya está disponible!</h2>
+          <p style="margin: 0 0 28px 0; font-size: 15px; color: #94a3b8; line-height: 1.6;">La historia continúa. Puedes acceder al capítulo más reciente en Mizuvichi.</p>
+          <a href="${enlace}" target="_blank" style="display: inline-block; padding: 14px 28px; background-color: #ff3e3e; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">Leer capítulo ahora &rarr;</a>
+        </td></tr>
+      </table>
+    </td></tr>
   </table>
-
 </body>
-</html>
-`;
+</html>`;
 }
-
 
 function crearCorreoAviso() {
   return `
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Comunicado - Mizuvichi</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #0d0e12; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #e2e8f0;">
-  
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #0d0e12; font-family: sans-serif; color: #e2e8f0;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0d0e12; padding: 40px 10px;">
-    <tr>
-      <td align="center">
-        
-        <!-- Contenedor Principal -->
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 560px; background-color: #16181e; border-radius: 12px; border: 1px solid #262933; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-          
-          <!-- Encabezado / Logo -->
-          <tr>
-            <td align="center" style="padding: 32px 32px 24px 32px; border-bottom: 1px solid #262933; background: linear-gradient(180deg, #1f222b 0%, #16181e 100%);">
-              <span style="display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 3px; color: #10b981; text-transform: uppercase; margin-bottom: 6px;">Comunicado</span>
-              <h1 style="margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 2px; color: #ffffff;">MIZUVICHI</h1>
-            </td>
-          </tr>
-
-          <!-- Cuerpo -->
-          <tr>
-            <td style="padding: 36px 32px; text-align: left;">
-              <div style="display: inline-block; background-color: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; padding: 4px 12px; border-radius: 0 4px 4px 0; margin-bottom: 20px;">
-                <span style="font-size: 12px; font-weight: 600; color: #10b981; text-transform: uppercase; letter-spacing: 1px;">Actualización</span>
-              </div>
-              
-              <h2 style="margin: 0 0 16px 0; font-size: 22px; font-weight: 700; color: #ffffff; line-height: 1.3;">
-                Nueva actualización del proyecto
-              </h2>
-
-              <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.6; color: #94a3b8;">
-                Se ha publicado un nuevo comunicado oficial en la plataforma. Ingresa para enterarte de los últimos avances y novedades.
-              </p>
-
-              <!-- Botón de Acción -->
-              <table role="presentation" cellspacing="0" cellpadding="0" style="margin-top: 10px;">
-                <tr>
-                  <td align="center" style="border-radius: 8px; background-color: #10b981;">
-                    <a href="${WEBSITE_URL}" target="_blank" style="display: inline-block; padding: 14px 28px; font-size: 14px; font-weight: 600; color: #000000; text-decoration: none; border-radius: 8px; letter-spacing: 0.5px;">
-                      Ver aviso oficial &rarr;
-                    </a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Pie de página -->
-          <tr>
-            <td style="padding: 24px 32px; background-color: #111216; border-top: 1px solid #262933; text-align: center;">
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: #64748b; line-height: 1.5;">
-                Recibes este correo porque te suscribiste a las novedades de Mizuvichi.
-              </p>
-              <p style="margin: 0; font-size: 11px; color: #475569;">
-                &copy; ${new Date().getFullYear()} Mizuvichi. Todos los derechos reservados.
-              </p>
-            </td>
-          </tr>
-
-        </table>
-
-      </td>
-    </tr>
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 560px; background-color: #16181e; border-radius: 12px; border: 1px solid #262933; overflow: hidden;">
+        <tr><td align="center" style="padding: 32px; border-bottom: 1px solid #262933; background: #1f222b;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 3px; color: #10b981; text-transform: uppercase;">Comunicado</span>
+          <h1 style="margin: 6px 0 0 0; font-size: 26px; color: #ffffff;">MIZUVICHI</h1>
+        </td></tr>
+        <tr><td style="padding: 36px 32px;">
+          <h2 style="margin: 0 0 16px 0; font-size: 22px; color: #ffffff;">Nueva actualización del proyecto</h2>
+          <p style="margin: 0 0 28px 0; font-size: 15px; color: #94a3b8; line-height: 1.6;">Se ha publicado un nuevo comunicado en la plataforma.</p>
+          <a href="${WEBSITE_URL}" target="_blank" style="display: inline-block; padding: 14px 28px; background-color: #10b981; color: #000000; text-decoration: none; border-radius: 8px; font-weight: 600;">Ver aviso oficial &rarr;</a>
+        </td></tr>
+      </table>
+    </td></tr>
   </table>
-
 </body>
-</html>
-`;
+</html>`;
 }
 
-
 // =====================================================
-// ENVIAR UN CORREO (DIRECTO CON GMAIL / NODEMAILER)
-// =====================================================
-
-async function enviarUnoPorUno({ email, asunto, html, texto }) {
-  await transporter.sendMail({
-    from: `"Mizuvichi" <${process.env.GMAIL_USER}>`,
-    to: email,
-    subject: asunto,
-    text: texto,
-    html: html
-  });
-}
-
-
-// =====================================================
-// ENVIAR A TODOS
+// ENVÍO DE CORREOS
 // =====================================================
 
 async function enviarATodos(emails, asunto, html, texto) {
-  let enviados = 0;
-  let fallidos = 0;
+  let enviados = 0, fallidos = 0;
 
   for (const email of emails) {
     try {
       console.log(`Enviando a: ${email}`);
-      await enviarUnoPorUno({ email, asunto, html, texto });
+      await transporter.sendMail({
+        from: `"Mizuvichi" <${process.env.GMAIL_USER}>`,
+        to: email,
+        subject: asunto,
+        text: texto,
+        html: html
+      });
       enviados++;
-      console.log(`✓ Enviado correctamente`);
+      console.log(`✓ Enviado`);
     } catch (error) {
       fallidos++;
-      console.error(
-        `✗ Error con ${email}:`,
-        error.message
-      );
+      console.error(`✗ Error enviando a ${email}:`, error.message);
     }
-
     await esperar(DELAY_BETWEEN_EMAILS);
   }
 
-  console.log(`\nResultado: ${enviados} enviados, ${fallidos} fallidos.`);
   return { enviados, fallidos };
 }
 
-
 // =====================================================
-// PROCESO PRINCIPAL
+// EJECUCIÓN PRINCIPAL
 // =====================================================
 
 async function notify() {
   console.log("\n===== MIZUVICHI =====\n");
 
-  const capitulos = obtenerCapitulos();
-  const avisos = obtenerAvisos();
+  const capitulos = obtenerCapitulosDinamico();
+  const avisos = obtenerAvisosDinamico();
   const metaRef = db.ref("metadatos_envios");
 
   const snapshot = await metaRef.once("value");
@@ -316,11 +241,11 @@ async function notify() {
   const nuevosCaps = capitulos.filter(cap => !capitulosAnteriores.includes(cap));
   const nuevosAvisos = avisos.filter(aviso => !avisosAnteriores.includes(aviso));
 
-  console.log(`Capítulos nuevos: ${nuevosCaps.length}`);
-  console.log(`Avisos nuevos: ${nuevosAvisos.length}`);
+  console.log(`Capítulos nuevos detectados: ${nuevosCaps.length}`);
+  console.log(`Avisos nuevos detectados: ${nuevosAvisos.length}`);
 
   if (nuevosCaps.length === 0 && nuevosAvisos.length === 0) {
-    console.log("No hay contenido nuevo.");
+    console.log("No hay contenido nuevo que notificar.");
     return;
   }
 
@@ -328,58 +253,51 @@ async function notify() {
   const subscribers = subsSnapshot.val();
   const emails = obtenerCorreos(subscribers);
 
-  console.log(`Suscriptores: ${emails.length}`);
+  console.log(`Suscriptores a notificar: ${emails.length}`);
 
   if (emails.length === 0) {
-    console.log("No hay correos válidos.");
+    console.log("No hay correos registrados en la base de datos.");
     return;
   }
 
   const capitulosEnviados = [];
   const avisosEnviados = [];
 
-  // CAPÍTULOS
   for (const cap of nuevosCaps) {
     const nombreCap = cap.replace("Cap_", "Capítulo ");
     const enlace = `${WEBSITE_URL}#capitulo=${encodeURIComponent(cap)}`;
     const html = crearCorreoCapitulo(nombreCap, enlace);
 
-    const resultado = await enviarATodos(
+    const res = await enviarATodos(
       emails,
       `📖 ${nombreCap} ya está disponible - Mizuvichi`,
       html,
       `${nombreCap} ya está disponible.\n\nLee el capítulo aquí: ${enlace}`
     );
 
-    if (resultado.fallidos === 0) {
-      capitulosEnviados.push(cap);
-    }
+    if (res.fallidos === 0) capitulosEnviados.push(cap);
   }
 
-  // AVISOS
   for (const aviso of nuevosAvisos) {
     const html = crearCorreoAviso();
 
-    const resultado = await enviarATodos(
+    const res = await enviarATodos(
       emails,
       "📢 Nueva actualización en Mizuvichi",
       html,
       `Hay un nuevo aviso oficial en Mizuvichi.\n\nVisita la web: ${WEBSITE_URL}`
     );
 
-    if (resultado.fallidos === 0) {
-      avisosEnviados.push(aviso);
-    }
+    if (res.fallidos === 0) avisosEnviados.push(aviso);
   }
 
-  // GUARDAR ESTADO
   await metaRef.set({
     capitulos: [...capitulosAnteriores, ...capitulosEnviados],
     avisos: [...avisosAnteriores, ...avisosEnviados],
     ultimaActualizacion: Date.now()
   });
 
-  console.log("\nProceso terminado.");
+  console.log("\nProceso finalizado con éxito.");
 }
 
 notify().catch(error => {
