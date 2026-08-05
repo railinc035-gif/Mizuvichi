@@ -336,6 +336,9 @@ header:hover .online-counter, header:active .online-counter {
     background: #000;
     z-index: 9999;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Desplazamiento inercial suave en iOS */
+    scroll-behavior: smooth;
+    overscroll-behavior-y: contain; /* Evita arrastrar el body de fondo */
 }
 
 .viewer-nav {
@@ -394,9 +397,9 @@ header:hover .online-counter, header:active .online-counter {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7); 
     border: 1px solid #111; 
     image-rendering: -webkit-optimize-contrast;
-    content-visibility: auto;
     backface-visibility: hidden;
     transform: translateZ(0);
+    will-change: transform; /* Pista de optimización de rendimiento GPU */
 }
 
 /* ==========================================================================
@@ -837,6 +840,43 @@ header:hover .online-counter, header:active .online-counter {
     color: #00ff66;
 }
 
+/* Estilos para etiquetas de estado (Emisión, Pausa, Terminado) con bordes y brillos */
+.status-badge {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Verde en emisión */
+.status-badge.emision {
+    background: rgba(0, 255, 102, 0.1);
+    color: #00ff66;
+    border: 1px solid #00ff66;
+    box-shadow: 0 0 8px rgba(0, 255, 102, 0.2);
+}
+
+/* Blanco en pausa */
+.status-badge.pausa {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid #ffffff;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+/* Rojo en terminado */
+.status-badge.terminado {
+    background: rgba(255, 0, 0, 0.1);
+    color: #ff0000;
+    border: 1px solid #ff0000;
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.2);
+}
+
 .series-info {
     padding: 12px;
     display: flex;
@@ -982,7 +1022,7 @@ header:hover .online-counter, header:active .online-counter {
 <body>
 
 <header>
-    <h1>Thalesis</h1>
+    <h1>MIZUVICHI</h1>
     
     <div class="follow-container">
         <button class="follow-btn" id="btn-toggle-follow">
@@ -1014,10 +1054,10 @@ header:hover .online-counter, header:active .online-counter {
 <div class="section" id="gallery-home-section">
     <div class="tabs-container" id="gallery-tabs">
         <button class="tab-btn active" data-tab="manga">
-            <i class="fas fa-book-open"></i> Manga
+            <i class="fas fa-book-open"></i>Manga
         </button>
         <button class="tab-btn" data-tab="one-shot">
-            <i class="fas fa-magic"></i> One Shot
+            <i class="fas fa-magic"></i>One Shot
         </button>
     </div>
 
@@ -1056,7 +1096,7 @@ header:hover .online-counter, header:active .online-counter {
     </div>
     
     <div class="section">
-        <h2 id="chapters-section-title">📖 CAPÍTULOS</h2>
+        <h2 id="chapters-section-title">CAPÍTULOS</h2>
         <div id="chapters"></div>
     </div>
 </div>
@@ -1558,13 +1598,14 @@ header:hover .online-counter, header:active .online-counter {
       } catch (error) { contenedorAvisos.parentElement.style.display = "none"; }
   }
 
-  // --- LÓGICA DE LA GALERÍA MANGA PLUS ---
+  // --- LÓGICA DE LA GALERÍA ---
 
   const seriesData = {
       "thalesis": {
           id: "thalesis",
           title: "Thalesis",
           type: "manga",
+          status: "pausa", // Valores: "emision" | "pausa" | "terminado"
           cover: "https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png",
           description: "Un manga intrigante y misterioso. Sumérgete en el oscuro y fascinante mundo de Thalesis y desvela sus grandes enigmas.",
           author: "Raylin AC",
@@ -1574,6 +1615,7 @@ header:hover .online-counter, header:active .online-counter {
           id: "mizuvichi",
           title: "Mizuvichi",
           type: "one-shot",
+          status: "terminado", // Valores: "emision" | "pausa" | "terminado"
           cover: "https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png",
           description: "Una obra única auto-conclusiva (One Shot) que te atrapará con su increíble arte y profunda narrativa.",
           author: "Raylin AC",
@@ -1614,6 +1656,7 @@ header:hover .online-counter, header:active .online-counter {
                           id: sId,
                           title: sDir.name.replace(/_/g, " ").replace(/-/g, " "),
                           type: "manga",
+                          status: "emision", // Por defecto en emisión para nuevas series
                           cover: "https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png", // fallback
                           description: `Una increíble obra titulada ${sDir.name.replace(/_/g, " ").replace(/-/g, " ")}. ¡Disfrútala en la galería!`,
                           author: "Raylin AC",
@@ -1630,7 +1673,7 @@ header:hover .online-counter, header:active .online-counter {
 
                   if (directPngs.length > 0) {
                       // Si hay imágenes directas, es un capítulo único directo
-                      seriesData[sId].chapters.push({ name: "Capítulo Único", images: directPngs });
+                      seriesData[sId].chapters.push({ name: "Capítulo Único", uniqueId: sId + "_direct", images: directPngs });
                   } else {
                       // Si no, escaneamos las subcarpetas como capítulos
                       const validCapDirs = sItems.filter(item => item.type === "dir");
@@ -1641,7 +1684,11 @@ header:hover .online-counter, header:active .online-counter {
                           const pngs = subFiles.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
                           if (pngs.length === 0) continue;
 
-                          seriesData[sId].chapters.push({ name: cDir.name, images: pngs });
+                          // Si es la serie principal "thalesis", usamos el nombre directo del capítulo (como "Cap_01")
+                          // para restaurar y mantener los contadores históricos y comentarios existentes de Firebase.
+                          // Para otras series de manga, usamos un ID prefijado exclusivo e independiente.
+                          const uniqueId = sId === "thalesis" ? cDir.name : sId + "_" + cDir.name;
+                          seriesData[sId].chapters.push({ name: cDir.name, uniqueId: uniqueId, images: pngs });
                       }
                   }
               }
@@ -1660,6 +1707,7 @@ header:hover .online-counter, header:active .online-counter {
                           id: sId,
                           title: sDir.name.replace(/_/g, " ").replace(/-/g, " "),
                           type: "one-shot",
+                          status: "terminado", // One shots suelen considerarse terminados
                           cover: "https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png", // fallback
                           description: `Un increíble One Shot titulado ${sDir.name.replace(/_/g, " ").replace(/-/g, " ")}.`,
                           author: "Raylin AC",
@@ -1676,7 +1724,7 @@ header:hover .online-counter, header:active .online-counter {
 
                   if (directPngs.length > 0) {
                       // Si hay imágenes directas, es un capítulo único directo (muy común en One Shots)
-                      seriesData[sId].chapters.push({ name: "Capítulo Único", images: directPngs });
+                      seriesData[sId].chapters.push({ name: "Capítulo Único", uniqueId: sId + "_direct", images: directPngs });
                   } else {
                       // Si no, escaneamos las subcarpetas como capítulos
                       const validCapDirs = sItems.filter(item => item.type === "dir");
@@ -1687,7 +1735,7 @@ header:hover .online-counter, header:active .online-counter {
                           const pngs = subFiles.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
                           if (pngs.length === 0) continue;
 
-                          seriesData[sId].chapters.push({ name: cDir.name, images: pngs });
+                          seriesData[sId].chapters.push({ name: cDir.name, uniqueId: sId + "_" + cDir.name, images: pngs });
                       }
                   }
               }
@@ -1703,7 +1751,7 @@ header:hover .online-counter, header:active .online-counter {
               const pngs = paginas.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
               if (pngs.length === 0) continue;
 
-              const chapterObj = { name: folder.name, images: pngs };
+              const chapterObj = { name: folder.name, uniqueId: folder.name, images: pngs };
 
               if (folder.name.startsWith("Cap_") || folder.name.startsWith("Manga_")) {
                   seriesData.thalesis.chapters.push(chapterObj);
@@ -1718,6 +1766,40 @@ header:hover .online-counter, header:active .online-counter {
               // Si tiene capítulos, actualizamos el cover dinámicamente con la primera página del primer capítulo
               if (series.chapters.length > 0) {
                   series.cover = series.chapters[series.chapters.length - 1].images[0].download_url;
+              }
+          });
+
+          // Frases de índice literal para buscar fácilmente en el código fuente
+          const listaDescripcionesFijas = [
+              "Taiga, un joven creado artificialmente en las profundas instalaciones de Aerin Thalesis, sobrevive con un único propósito: vengar a los amigos que vio morir en manos de sus creadores. Sin embargo, tras ser secuestrado de nuevo por el sádico Dr. Bachino, una verdad devastadora destruye su cordura...",
+
+              "Indice 02",
+              "Indice 03",
+              "Indice 04",
+              "Indice 05",
+              "Indice 06",
+              "Indice 07",
+              "Indice 08",
+              "Indice 09",
+              "Indice 10",
+              "Indice 11",
+              "Indice 12",
+              "Indice 13",
+              "Indice 14",
+              "Indice 15",
+              "Indice 16",
+              "Indice 17",
+              "Indice 18",
+              "Indice 19",
+              "Indice 20"
+          ];
+
+          // Asignar descripción secuencial única para cada serie activa usando la lista literal
+          let indexCounter = 0;
+          Object.values(seriesData).forEach(series => {
+              if (series.chapters.length > 0) {
+                  series.description = listaDescripcionesFijas[indexCounter] || `Indice ${String(indexCounter + 1).padStart(2, '0')}`;
+                  indexCounter++;
               }
           });
 
@@ -1794,6 +1876,31 @@ header:hover .online-counter, header:active .online-counter {
       document.getElementById("series-author").innerText = `Autor: ${series.author}`;
       document.getElementById("series-desc").innerText = series.description;
 
+      // Renderizar etiqueta de estado de la serie (Verde en emisión, Blanco en pausa, Rojo en terminado)
+      let labelStatus = "";
+      let statusClass = series.status || "emision";
+      if (series.type === "one-shot") {
+          labelStatus = "Terminado";
+          statusClass = "terminado";
+      } else {
+          if (statusClass === "emision") labelStatus = "En emisión";
+          else if (statusClass === "pausa") labelStatus = "En pausa";
+          else if (statusClass === "terminado") labelStatus = "Terminado";
+      }
+
+      const metaContainer = document.querySelector("#series-detail-container .series-detail-meta");
+      if (metaContainer) {
+          // Eliminar badge anterior si existe para evitar duplicación
+          const oldBadge = metaContainer.querySelector(".status-badge");
+          if (oldBadge) oldBadge.remove();
+
+          // Crear y añadir nuevo badge de estado
+          const badgeSpan = document.createElement("span");
+          badgeSpan.className = `status-badge ${statusClass}`;
+          badgeSpan.innerText = labelStatus;
+          metaContainer.appendChild(badgeSpan);
+      }
+
       // Renderizar capítulos de esta serie
       const contenedorCapitulos = document.getElementById("chapters");
       contenedorCapitulos.innerHTML = "";
@@ -1821,7 +1928,7 @@ header:hover .online-counter, header:active .online-counter {
               <div class="chapter-header">
                   <div class="chapter-left">
                       <img class="chapter-thumb" src="${cap.images[0].download_url}">
-                      <div><h3>${tituloCap}</h3><div class="chapter-views" id="views-${cap.name}">...</div></div>
+                      <div><h3>${tituloCap}</h3><div class="chapter-views" id="views-${cap.uniqueId}">...</div></div>
                   </div>
                   <div>▶</div>
               </div>
@@ -1831,7 +1938,7 @@ header:hover .online-counter, header:active .online-counter {
                   window.abrirVisor(index);
               });
               contenedorCapitulos.appendChild(card);
-              window.escucharVisitasCapitulo(cap.name, card.querySelector(`#views-${cap.name}`));
+              window.escucharVisitasCapitulo(cap.uniqueId, card.querySelector(`#views-${cap.uniqueId}`));
           });
       }
 
@@ -1912,11 +2019,18 @@ header:hover .online-counter, header:active .online-counter {
 
       const contentDiv = document.getElementById("viewer-content");
       contentDiv.innerHTML = ""; 
-      capitulo.images.forEach(img => {
+      capitulo.images.forEach((img, i) => {
           const imageElement = document.createElement("img");
           imageElement.src = img.download_url;
-          imageElement.loading = "lazy";
           imageElement.decoding = "async";
+          
+          if (i < 3) {
+              imageElement.loading = "eager";
+              imageElement.setAttribute("fetchpriority", "high");
+          } else {
+              imageElement.loading = "lazy";
+          }
+          
           contentDiv.appendChild(imageElement);
       });
       
@@ -1931,15 +2045,15 @@ header:hover .online-counter, header:active .online-counter {
       document.getElementById("viewer-container").scrollTop = 0;
       document.body.style.overflow = "hidden";
       window.verificarYBloquearNombre();
-      window.registrarVisitaCapitulo(capitulo.name);
-      window.cargarComentariosDelCapitulo(capitulo.name, document.getElementById("lista-comentarios"), scrollAComentarios);
+      window.registrarVisitaCapitulo(capitulo.uniqueId);
+      window.cargarComentariosDelCapitulo(capitulo.uniqueId, document.getElementById("lista-comentarios"), scrollAComentarios);
   }
 
   document.getElementById("formulario-comentario").addEventListener("submit", (e) => {
       e.preventDefault();
       const cap = listaCapitulosGuardados[indiceCapituloActual];
       if (cap) {
-          window.intentarPublicarComentario(cap.name, document.getElementById("comentario-nombre").value, document.getElementById("comentario-texto").value);
+          window.intentarPublicarComentario(cap.uniqueId, document.getElementById("comentario-nombre").value, document.getElementById("comentario-texto").value);
           document.getElementById("comentario-texto").value = "";
       }
   });
