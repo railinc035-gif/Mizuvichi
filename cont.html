@@ -1,1110 +1,1193 @@
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getDatabase, ref, onValue, runTransaction, push, set, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, onValue, runTransaction, push, set, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBSO8Cfuq2t9xvJ_jJMAI-ygpgJ1ezFUHQ",
-    authDomain: "webmanga-7b2cb.firebaseapp.com",
-    databaseURL: "https://webmanga-7b2cb-default-rtdb.firebaseio.com",
-    projectId: "webmanga-7b2cb",
-    storageBucket: "webmanga-7b2cb.firebasestorage.app",
-    messagingSenderId: "956720725778",
-    appId: "1:956720725778:web:ecb504f7c91e220a393dcb",
-    measurementId: "G-6ESEFLWEX2"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyBSO8Cfuq2t9xvJ_jJMAI-ygpgJ1ezFUHQ",
+  authDomain: "webmanga-7b2cb.firebaseapp.com",
+  databaseURL: "https://webmanga-7b2cb-default-rtdb.firebaseio.com",
+  projectId: "webmanga-7b2cb",
+  storageBucket: "webmanga-7b2cb.firebasestorage.app",
+  messagingSenderId: "956720725778",
+  appId: "1:956720725778:web:ecb504f7c91e220a393dcb",
+  measurementId: "G-6ESEFLWEX2"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const database = getDatabase(app);
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
 
-  const CLAVE_SECRETA_AUTOR = "thalesis2026"; 
+const CLAVE_SECRETA_AUTOR = "thalesis2026"; 
 
-  // --- OPTIMIZACIÓN DE CDN JSDELIVR ---
-  function obtenerUrlCDN(url) {
-      if (!url) return "";
-      if (url.includes("cdn.jsdelivr.net")) return url;
-      if (url.includes("raw.githubusercontent.com")) {
-          let nuevoUrl = url.replace("raw.githubusercontent.com", "cdn.jsdelivr.net/gh");
-          nuevoUrl = nuevoUrl.replace("/main/", "@main/").replace("/master/", "@master/");
-          return nuevoUrl;
-      }
-      return url;
-  }
+// --- OPTIMIZACIÓN DE CDN JSDELIVR ---
+function obtenerUrlCDN(url) {
+    if (!url) return "";
+    if (url.includes("cdn.jsdelivr.net")) return url;
+    if (url.includes("raw.githubusercontent.com")) {
+        let nuevoUrl = url.replace("raw.githubusercontent.com", "cdn.jsdelivr.net/gh");
+        nuevoUrl = nuevoUrl.replace("/main/", "@main/").replace("/master/", "@master/");
+        return nuevoUrl;
+    }
+    return url;
+}
 
-  // --- SOLUCIÓN AL BUG DE SCROLL EN RECARGA ---
-  history.scrollRestoration = 'manual';
-  window.scrollTo(0, 0);
+// --- SOLUCIÓN AL BUG DE SCROLL EN RECARGA ---
+history.scrollRestoration = 'manual';
+window.scrollTo(0, 0);
 
-  // --- VISITAS ---
-  window.registrarVisitaInicio = function() {
-      const ahora = Date.now();
-      const ultimoRegistro = localStorage.getItem('cooldown_inicio');
-      if (!ultimoRegistro || (ahora - ultimoRegistro > 600000)) {
-          const refInicio = ref(database, 'contadores/visitas_inicio');
-          runTransaction(refInicio, (actual) => (actual || 0) + 1);
-          localStorage.setItem('cooldown_inicio', ahora);
-      }
-  };
+// --- VISITAS ---
+window.registrarVisitaInicio = function() {
+    const ahora = Date.now();
+    const ultimoRegistro = localStorage.getItem('cooldown_inicio');
+    if (!ultimoRegistro || (ahora - ultimoRegistro > 600000)) {
+        const refInicio = ref(database, 'contadores/visitas_inicio');
+        runTransaction(refInicio, (actual) => (actual || 0) + 1);
+        localStorage.setItem('cooldown_inicio', ahora);
+    }
+};
 
-  window.escucharVisitasGlobales = function() {
-      const refInicio = ref(database, 'contadores/visitas_inicio');
-      const elementoGlobal = document.getElementById("num-global");
-      onValue(refInicio, (snapshot) => {
-          elementoGlobal.innerText = snapshot.val() || 0;
-      });
+window.escucharVisitasGlobales = function() {
+    const refInicio = ref(database, 'contadores/visitas_inicio');
+    const elementoGlobal = document.getElementById("num-global");
+    onValue(refInicio, (snapshot) => {
+        elementoGlobal.innerText = snapshot.val() || 0;
+    });
 
-      // --- PRESENCIA REALTIME ---
-      const refPresenciaRoot = ref(database, 'presencia');
-      const refMiPresencia = push(refPresenciaRoot);
-      const elementoOnline = document.getElementById("num-online");
+    // --- PRESENCIA REALTIME ---
+    const refPresenciaRoot = ref(database, 'presencia');
+    const refMiPresencia = push(refPresenciaRoot);
+    const elementoOnline = document.getElementById("num-online");
 
-      set(refMiPresencia, { conectado: true, fecha: serverTimestamp() });
-      onDisconnect(refMiPresencia).remove();
+    set(refMiPresencia, { conectado: true, fecha: serverTimestamp() });
+    onDisconnect(refMiPresencia).remove();
 
-      onValue(refPresenciaRoot, (snapshot) => {
-          const total = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
-          if (elementoOnline) elementoOnline.innerText = total;
-      });
-  };
+    onValue(refPresenciaRoot, (snapshot) => {
+        const total = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+        if (elementoOnline) elementoOnline.innerText = total;
+    });
+};
 
-  window.registrarVisitaCapitulo = function(nombreCap) {
-      const ahora = Date.now();
-      const ultimoRegistro = localStorage.getItem('cooldown_' + nombreCap);
-      if (!ultimoRegistro || (ahora - ultimoRegistro > 600000)) {
-          const refCap = ref(database, 'contadores/capitulo_' + nombreCap);
-          runTransaction(refCap, (actual) => (actual || 0) + 1);
-          localStorage.setItem('cooldown_' + nombreCap, ahora);
-      }
-  };
+window.registrarVisitaCapitulo = function(nombreCap) {
+    const ahora = Date.now();
+    const ultimoRegistro = localStorage.getItem('cooldown_' + nombreCap);
+    if (!ultimoRegistro || (ahora - ultimoRegistro > 600000)) {
+        const refCap = ref(database, 'contadores/capitulo_' + nombreCap);
+        runTransaction(refCap, (actual) => (actual || 0) + 1);
+        localStorage.setItem('cooldown_' + nombreCap, ahora);
+    }
+};
 
-  window.escucharVisitasCapitulo = function(nombreCap, elementoHtml) {
-      const refCap = ref(database, 'contadores/capitulo_' + nombreCap);
-      onValue(refCap, (snapshot) => {
-          const visitas = snapshot.val() || 0;
-          elementoHtml.innerHTML = `<i class="fas fa-eye"></i> ${visitas} lecturas`;
-      });
-  };
+window.escucharVisitasCapitulo = function(nombreCap, elementoHtml) {
+    const refCap = ref(database, 'contadores/capitulo_' + nombreCap);
+    onValue(refCap, (snapshot) => {
+        const visitas = snapshot.val() || 0;
+        elementoHtml.innerHTML = `<i class="fas fa-eye"></i> ${visitas} lecturas`;
+    });
+};
 
-  window.calcularTiempoRelativo = function(timestamp) {
-      if (!timestamp) return "Hace un momento";
-      const ahora = Date.now();
-      const diferencia = ahora - timestamp;
+window.calcularTiempoRelativo = function(timestamp) {
+    if (!timestamp) return "Hace un momento";
+    const ahora = Date.now();
+    const diferencia = ahora - timestamp;
 
-      const segundos = Math.floor(diferencia / 1000);
-      const minutos = Math.floor(segundos / 60);
-      const horas = Math.floor(minutos / 60);
-      const dias = Math.floor(horas / 24);
+    const segundos = Math.floor(diferencia / 1000);
+    const minutos = Math.floor(segundos / 60);
+    const horas = Math.floor(minutos / 60);
+    const dias = Math.floor(horas / 24);
 
-      if (segundos < 60) return "Hace un momento";
-      if (minutos < 60) return `Hace ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}`;
-      if (horas < 24) return `Hace ${horas} ${horas === 1 ? 'hora' : 'horas'}`;
-      if (dias === 1) return "Ayer";
-      if (dias < 7) return `Hace ${dias} días`;
-      
-      const fechaObj = new Date(timestamp);
-      return fechaObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-  };
+    if (segundos < 60) return "Hace un momento";
+    if (minutos < 60) return `Hace ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}`;
+    if (horas < 24) return `Hace ${horas} ${horas === 1 ? 'hora' : 'horas'}`;
+    if (dias === 1) return "Ayer";
+    if (dias < 7) return `Hace ${dias} días`;
+    
+    const fechaObj = new Date(timestamp);
+    return fechaObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+};
 
-  window.verificarYBloquearNombre = function() {
-      const inputNombre = document.getElementById("comentario-nombre");
-      if (!inputNombre) return;
+window.verificarYBloquearNombre = function() {
+    const inputNombre = document.getElementById("comentario-nombre");
+    if (!inputNombre) return;
 
-      const nombreGuardado = localStorage.getItem("mi_nombre_fijo");
-      const soyElAutorLogueado = localStorage.getItem("autor_autenticado") === "true";
+    const nombreGuardado = localStorage.getItem("mi_nombre_fijo");
+    const soyElAutorLogueado = localStorage.getItem("autor_autenticado") === "true";
 
-      if (soyElAutorLogueado) {
-          inputNombre.value = "Raylin AC";
-          inputNombre.disabled = true;
-      } else if (nombreGuardado) {
-          inputNombre.value = nombreGuardado;
-          inputNombre.disabled = true; 
-      }
-  };
+    if (soyElAutorLogueado) {
+        inputNombre.value = "Raylin AC";
+        inputNombre.disabled = true;
+    } else if (nombreGuardado) {
+        inputNombre.value = nombreGuardado;
+        inputNombre.disabled = true; 
+    }
+};
 
-  // --- COMENTARIOS ---
-  let desvincularEscuchaComentarios = null;
-  let replyState = {
-      commentId: null,
-      authorName: null
-  };
+// --- COMENTARIOS ---
+let desvincularEscuchaComentarios = null;
+let replyState = {
+    commentId: null,
+    authorName: null
+};
 
-  window.setReplyState = function(id, author) {
-      replyState.commentId = id;
-      replyState.authorName = author;
-      
-      const indicator = document.getElementById("reply-indicator");
-      const targetName = document.getElementById("reply-target-name");
-      const commentInput = document.getElementById("comentario-texto");
+window.setReplyState = function(id, author) {
+    replyState.commentId = id;
+    replyState.authorName = author;
+    
+    const indicator = document.getElementById("reply-indicator");
+    const targetName = document.getElementById("reply-target-name");
+    const commentInput = document.getElementById("comentario-texto");
 
-      if (indicator && targetName) {
-          targetName.innerText = author;
-          indicator.classList.add("active");
-          commentInput.focus();
-          commentInput.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-  };
+    if (indicator && targetName) {
+        targetName.innerText = author;
+        indicator.classList.add("active");
+        commentInput.focus();
+        commentInput.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+};
 
-  window.cancelReply = function() {
-      replyState.commentId = null;
-      replyState.authorName = null;
-      
-      const indicator = document.getElementById("reply-indicator");
-      if (indicator) {
-          indicator.classList.remove("active");
-      }
-  };
+window.cancelReply = function() {
+    replyState.commentId = null;
+    replyState.authorName = null;
+    
+    const indicator = document.getElementById("reply-indicator");
+    if (indicator) {
+        indicator.classList.remove("active");
+    }
+};
 
-  window.cargarComentariosDelCapitulo = function(nombreCap, contenedorHtml, scrollAlFinal = false) {
-      if (desvincularEscuchaComentarios) desvincularEscuchaComentarios();
+window.cargarComentariosDelCapitulo = function(nombreCap, contenedorHtml, scrollAlFinal = false) {
+    if (desvincularEscuchaComentarios) desvincularEscuchaComentarios();
 
-      const refComentarios = ref(database, 'comentarios/' + nombreCap);
-      
-      desvincularEscuchaComentarios = onValue(refComentarios, (snapshot) => {
-          contenedorHtml.innerHTML = "";
-          const datos = snapshot.val();
-          
-          if (!datos) {
-              contenedorHtml.innerHTML = `<p style="color:#555; font-size:0.9rem; text-align:center;">Nadie ha comentado aún. ¡Sé el primero!</p>`;
-              return;
-          }
+    const refComentarios = ref(database, 'comentarios/' + nombreCap);
+    
+    desvincularEscuchaComentarios = onValue(refComentarios, (snapshot) => {
+        contenedorHtml.innerHTML = "";
+        const datos = snapshot.val();
+        
+        if (!datos) {
+            contenedorHtml.innerHTML = `<p style="color:#555; font-size:0.9rem; text-align:center;">Nadie ha comentado aún. ¡Sé el primero!</p>`;
+            return;
+        }
 
-          const listaOrdenada = Object.keys(datos).reverse();
+        const listaOrdenada = Object.keys(datos).reverse();
 
-          let misComentariosGuardados = [];
+        let misComentariosGuardados = [];
+        try {
+            misComentariosGuardados = JSON.parse(localStorage.getItem("mis_comentarios_v3") || "[]");
+        } catch(e) { misComentariosGuardados = []; }
+
+        const soyElAutorLogueado = localStorage.getItem("autor_autenticado") === "true";
+        const nombreLocalFijo = localStorage.getItem("mi_nombre_fijo");
+
+        listaOrdenada.forEach((idComentario) => {
+            const info = datos[idComentario];
+            const card = document.createElement("div");
+            card.className = "comment-card";
+            card.id = "card-" + idComentario;
+            
+            let esMiComentarioReal = false;
+            if (info.esAutor === true) {
+                if (soyElAutorLogueado) esMiComentarioReal = true;
+            } else {
+                if (misComentariosGuardados.includes(idComentario) && nombreLocalFijo === info.autor) {
+                    esMiComentarioReal = true;
+                }
+            }
+
+            if (esMiComentarioReal) {
+                card.classList.add("es-mio");
+            }
+
+            let badgeAutorHtml = info.esAutor ? `<span class="badge-autor">Autor</span>` : "";
+            const textoFecha = window.calcularTiempoRelativo(info.fecha);
+            
+            let replyContextHtml = "";
+            if (info.replyTo) {
+                replyContextHtml = `
+                    <div class="reply-context">
+                        <i class="fas fa-reply fa-rotate-180"></i> Respondiendo a <b>@${escaperHtml(info.replyTo.author)}</b>
+                    </div>
+                `;
+            }
+
+            // Tipos de emojis disponibles para reaccionar
+            const emojiTipos = [
+                { key: "love", icon: "❤️" },
+                { key: "fire", icon: "🔥" },
+                { key: "wow", icon: "😮" },
+                { key: "haha", icon: "😂" }
+            ];
+
+            // Renderizar la barra de reacciones con los contadores de Firebase
+            let reaccionesHtml = `<div class="reactions-container">`;
+            emojiTipos.forEach(tipo => {
+                const conteo = (info.reacciones && info.reacciones[tipo.key]) || 0;
+                const haReaccionado = localStorage.getItem(`reacted_${idComentario}_${tipo.key}`) === "true";
+                const claseActiva = haReaccionado ? "reacted" : "";
+                reaccionesHtml += `
+                    <button class="reaction-btn ${claseActiva}" data-id="${idComentario}" data-key="${tipo.key}" title="Reaccionar con ${tipo.icon}">
+                        <span>${tipo.icon}</span>
+                        <span class="reaction-count">${conteo}</span>
+                    </button>
+                `;
+            });
+            reaccionesHtml += `</div>`;
+
+            card.innerHTML = `
+                <div class="comment-header">
+                    <div class="comment-author-wrapper">
+                        <span class="comment-author ${info.replyTo ? 'es-respuesta' : ''}">${escaperHtml(info.autor)}</span>
+                        ${badgeAutorHtml}
+                        <span class="comment-date">${textoFecha}</span>
+                    </div>
+                    <button class="action-btn delete-btn" data-id="${idComentario}"><i class="fas fa-trash-alt"></i></button>
+                </div>
+                ${replyContextHtml}
+                <p class="comment-text">${escaperHtml(info.texto)}</p>
+                <div class="comment-actions" style="gap: 10px; flex-wrap: wrap;">
+                    ${reaccionesHtml}
+                    <button class="action-btn reply-btn" data-id="${idComentario}" data-author="${escaperHtml(info.autor)}">
+                        <i class="fas fa-comment-dots"></i> Responder
+                    </button>
+                </div>
+            `;
+
+            // Agregar listeners para cada botón de emoji
+            card.querySelectorAll(".reaction-btn").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    const idCom = e.currentTarget.getAttribute("data-id");
+                    const keyReac = e.currentTarget.getAttribute("data-key");
+                    const haReaccionado = localStorage.getItem(`reacted_${idCom}_${keyReac}`) === "true";
+                    const refReac = ref(database, `comentarios/${nombreCap}/${idCom}/reacciones/${keyReac}`);
+                    const emojiIcon = e.currentTarget.querySelector("span").innerText;
+
+                    if (!haReaccionado) {
+                        localStorage.setItem(`reacted_${idCom}_${keyReac}`, "true");
+                        e.currentTarget.classList.add("reacted");
+                        window.crearEfectoLluviaEmojis(e, emojiIcon);
+                        runTransaction(refReac, (actual) => (actual || 0) + 1);
+                    } else {
+                        localStorage.removeItem(`reacted_${idCom}_${keyReac}`);
+                        e.currentTarget.classList.remove("reacted");
+                        runTransaction(refReac, (actual) => {
+                            let nuevoValor = (actual || 0) - 1;
+                            return nuevoValor < 0 ? 0 : nuevoValor;
+                        });
+                    }
+                });
+            });
+
+            card.querySelector(".delete-btn").addEventListener("click", (e) => {
+                if (confirm("¿Seguro que quieres eliminar tu comentario?")) {
+                    window.crearEfectoExplosionComentario(e.currentTarget, card); 
+                    setTimeout(() => {
+                        remove(ref(database, `comentarios/${nombreCap}/${idComentario}`));
+                    }, 400);
+                }
+            });
+
+            card.querySelector(".reply-btn").addEventListener("click", (e) => {
+                const id = e.currentTarget.getAttribute("data-id");
+                const author = e.currentTarget.getAttribute("data-author");
+                window.setReplyState(id, author);
+            });
+
+            contenedorHtml.appendChild(card);
+        });
+
+        if (scrollAlFinal) {
+            setTimeout(() => {
+                const seccionComentarios = document.getElementById("seccion-comentarios-root");
+                if (seccionComentarios) {
+                    seccionComentarios.scrollIntoView({ behavior: "smooth" });
+                }
+            }, 300);
+        }
+    });
+};
+
+window.intentarPublicarComentario = function(nombreCap, autor, texto) {
+    let esAutorReal = false;
+    const nameLimpio = autor.trim();
+
+    if (nameLimpio === "Raylin AC") {
+        if (localStorage.getItem("autor_autenticado") === "true") {
+            esAutorReal = true;
+        } else {
+            const pass = prompt("Contraseña de seguridad:");
+            if (pass === CLAVE_SECRETA_AUTOR) {
+                esAutorReal = true;
+                localStorage.setItem("autor_autenticado", "true"); 
+                window.verificarYBloquearNombre(); 
+            } else {
+                alert("Incorrecta.");
+                return; 
+            }
+        }
+    } else if (!localStorage.getItem("mi_nombre_fijo")) {
+        localStorage.setItem("mi_nombre_fijo", nameLimpio);
+        window.verificarYBloquearNombre();
+    }
+
+    const refComentarios = ref(database, 'comentarios/' + nombreCap);
+    const nuevoComentarioRef = push(refComentarios);
+    const idNuevoComentario = nuevoComentarioRef.key;
+
+    const dataParaGuardar = {
+        autor: esAutorReal ? "Raylin AC" : localStorage.getItem("mi_nombre_fijo"),
+        texto: texto,
+        likes: 0,
+        esAutor: esAutorReal, 
+        fecha: serverTimestamp()
+    };
+
+    if (replyState.commentId) {
+        dataParaGuardar.replyTo = {
+            id: replyState.commentId,
+            author: replyState.authorName
+        };
+    }
+
+    set(nuevoComentarioRef, dataParaGuardar).then(() => {
+        let misComentarios = JSON.parse(localStorage.getItem("mis_comentarios_v3") || "[]");
+        misComentarios.push(idNuevoComentario);
+        localStorage.setItem("mis_comentarios_v3", JSON.stringify(misComentarios));
+        window.cancelReply();
+    });
+};
+
+function escaperHtml(texto) {
+    if (!texto) return "";
+    return texto.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+// --- LÓGICA DE GITHUB ---
+const usuario = "railinc035-gif";
+const repo = "Mizuvichi";
+const api = `https://api.github.com/repos/${usuario}/${repo}/contents`;
+
+let listaCapitulosGuardados = [];
+let indiceCapituloActual = -1;
+
+const nombresDeCapitulos = {
+    "Cap_01": "Capítulo 01: Funeral para nadie"
+};
+
+function formatearNombreCapitulo(nombreCarpeta) {
+    if (nombresDeCapitulos[nombreCarpeta]) {
+        return nombresDeCapitulos[nombreCarpeta];
+    }
+    return nombreCarpeta.replace("Cap_", "Capítulo ");
+}
+
+window.crearEfectoLluviaEmojis = function(e, emoji) {
+    const emojis = [emoji, '✨', '💖', '🔥'];
+    const rootSeccion = document.getElementById("seccion-comentarios-root");
+    if (!rootSeccion) return;
+    const boundsRoot = rootSeccion.getBoundingClientRect();
+    const boundsBtn = e.currentTarget.getBoundingClientRect();
+    const xOriginal = boundsBtn.left - boundsRoot.left + boundsBtn.width / 2;
+    const yOriginal = boundsBtn.top - boundsRoot.top + boundsBtn.height / 2;
+
+    for (let i = 0; i < 12; i++) {
+        const span = document.createElement('span');
+        span.className = 'floating-emoji';
+        span.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        span.style.left = `${xOriginal}px`;
+        span.style.top = `${yOriginal}px`;
+        const angulo = (Math.random() * 120 + 30) * (Math.PI / 180); 
+        const velocidad = Math.random() * 100 + 50;
+        const xDestino = Math.cos(angulo) * velocidad * (Math.random() > 0.5 ? 1 : -1);
+        const yDestino = -Math.sin(angulo) * velocidad - 30; 
+        span.style.setProperty('--x', `${xDestino}px`);
+        span.style.setProperty('--y', `${yDestino}px`);
+        rootSeccion.appendChild(span);
+        span.addEventListener('animationend', () => span.remove());
+    }
+};
+
+window.crearEfectoExplosionComentario = function(botonClicado, elementoCard) {
+    const rootSeccion = document.getElementById("seccion-comentarios-root");
+    const boundsRoot = rootSeccion.getBoundingClientRect();
+    const boundsBtn = botonClicado.getBoundingClientRect();
+    const colores = ['#ff0000', '#b30000', '#300000', '#555555', '#222222'];
+    elementoCard.style.opacity = '0';
+    const xCentro = boundsBtn.left - boundsRoot.left + boundsBtn.width / 2;
+    const yCentro = boundsBtn.top - boundsRoot.top + boundsBtn.height / 2;
+
+    for (let i = 0; i < 40; i++) {
+        const particula = document.createElement('div');
+        particula.className = 'particle-fx';
+        particula.style.left = `${xCentro}px`;
+        particula.style.top = `${yCentro}px`;
+        particula.style.background = colores[Math.floor(Math.random() * colores.length)];
+        const mx = (Math.random() - 0.5) * 250; 
+        const my = (Math.random() * 150) - 50;  
+        particula.style.setProperty('--mx', `${mx}px`);
+        particula.style.setProperty('--my', `${my}px`);
+        rootSeccion.appendChild(particula);
+        particula.addEventListener('animationend', () => particula.remove());
+    }
+};
+
+async function cargarAvisos() {
+    const contenedorAvisos = document.getElementById("aviso-container");
+    try {
+        const respuesta = await fetch(`${api}/Aviso`);
+        if (!respuesta.ok) { contenedorAvisos.parentElement.style.display = "none"; return; }
+        const archivos = await respuesta.json();
+        const pngs = archivos.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true}));
+        if (pngs.length === 0) { contenedorAvisos.parentElement.style.display = "none"; return; }
+
+        const ultimoAvisoVisto = localStorage.getItem("ultimo_aviso_visto");
+        const idUltimoAviso = pngs[0].name;
+
+        pngs.forEach((img, index) => {
+            const wrapper = document.createElement("div");
+            wrapper.className = "aviso-wrapper";
+            if (index === 0 && ultimoAvisoVisto !== idUltimoAviso) {
+                const tag = document.createElement("span");
+                tag.className = "badge-nuevo";
+                tag.innerText = "Nuevo";
+                tag.onclick = () => { localStorage.setItem("ultimo_aviso_visto", idUltimoAviso); tag.style.display = "none"; };
+                wrapper.appendChild(tag);
+                setTimeout(() => { localStorage.setItem("ultimo_aviso_visto", idUltimoAviso); if (tag) tag.style.opacity = "0"; setTimeout(() => { if(tag) tag.style.display = "none"; }, 500); }, 10000);
+            }
+            const imageElement = document.createElement("img");
+            imageElement.src = obtenerUrlCDN(img.download_url);
+            imageElement.loading = "lazy";
+            imageElement.decoding = "async";
+            wrapper.appendChild(imageElement);
+            contenedorAvisos.appendChild(wrapper);
+        });
+    } catch (error) { contenedorAvisos.parentElement.style.display = "none"; }
+}
+
+// --- LÓGICA DE LA GALERÍA MANGA PLUS ---
+
+const seriesData = {
+    "thalesis": {
+        id: "thalesis",
+        title: "Thalesis",
+        type: "manga",
+        status: "pausa", // Valores: "emision" | "pausa" | "terminado"
+        cover: obtenerUrlCDN("https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png"),
+        description: "Taiga, un joven creado artificialmente en las profundas instalaciones de Aerin Thalesis, sobrevive con un único propósito: vengar a los amigos que vio morir en manos de sus creadores. Sin embargo, tras ser secuestrado de nuevo por el sádico Dr. Bachino, una verdad devastadora destruye su cordura.",
+        author: "Raylin AC",
+        chapters: []
+    },
+    "mizuvichi": {
+        id: "mizuvichi",
+        title: "Mizuvichi",
+        type: "one-shot",
+        status: "terminado", // Valores: "emision" | "pausa" | "terminado"
+        cover: obtenerUrlCDN("https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png"),
+        description: "Una obra única auto-conclusiva (One Shot) que te atrapará con su increíble arte y profunda narrativa.",
+        author: "Raylin AC",
+        chapters: []
+    }
+};
+
+let activeSeriesId = null;
+
+function buscarPortadaEnItems(items) {
+    if (!items || !Array.isArray(items)) return null;
+    // Busca un archivo que se llame "portada" o "cover" (caso insensible)
+    const fileMatch = items.find(item => item.type === "file" && /^(portada|cover)$/i.test(item.name.split('.')[0]));
+    if (fileMatch) {
+        return obtenerUrlCDN(fileMatch.download_url);
+    }
+    return null;
+}
+
+async function inicializarGaleria() {
+    try {
+        const respuesta = await fetch(api);
+        const archivos = await respuesta.json();
+
+          // --- AUTO-DETECCIÓN INTELIGENTE DE FAVICON/ICON EN LA RAÍZ ---
           try {
-              misComentariosGuardados = JSON.parse(localStorage.getItem("mis_comentarios_v3") || "[]");
-          } catch(e) { misComentariosGuardados = []; }
-
-          const soyElAutorLogueado = localStorage.getItem("autor_autenticado") === "true";
-          const nombreLocalFijo = localStorage.getItem("mi_nombre_fijo");
-
-          listaOrdenada.forEach((idComentario) => {
-              const info = datos[idComentario];
-              const card = document.createElement("div");
-              card.className = "comment-card";
-              card.id = "card-" + idComentario;
-              
-              let esMiComentarioReal = false;
-              if (info.esAutor === true) {
-                  if (soyElAutorLogueado) esMiComentarioReal = true;
-              } else {
-                  if (misComentariosGuardados.includes(idComentario) && nombreLocalFijo === info.autor) {
-                      esMiComentarioReal = true;
+              const faviconMatch = archivos.find(item => item.type === "file" && /^(favicon|icono|icon)$/i.test(item.name.split('.')[0]));
+              if (faviconMatch) {
+                  const faviconUrl = obtenerUrlCDN(faviconMatch.download_url);
+                  let linkFavicon = document.querySelector("link[rel*='icon']");
+                  if (!linkFavicon) {
+                      linkFavicon = document.createElement("link");
+                      linkFavicon.rel = "shortcut icon";
+                      document.head.appendChild(linkFavicon);
                   }
+                  linkFavicon.href = faviconUrl;
               }
-
-              if (esMiComentarioReal) {
-                  card.classList.add("es-mio");
-              }
-
-              let badgeAutorHtml = info.esAutor ? `<span class="badge-autor">Autor</span>` : "";
-              const textoFecha = window.calcularTiempoRelativo(info.fecha);
-              const yaTieneLike = localStorage.getItem(`liked_${idComentario}`);
-              const claseLiked = yaTieneLike ? "liked" : "";
-              const colorCorazon = yaTieneLike ? '#0084ff' : '#555';
-              
-              let replyContextHtml = "";
-              if (info.replyTo) {
-                  replyContextHtml = `
-                      <div class="reply-context">
-                          <i class="fas fa-reply fa-rotate-180"></i> Respondiendo a <b>@${escaperHtml(info.replyTo.author)}</b>
-                      </div>
-                  `;
-              }
-
-              card.innerHTML = `
-                  <div class="comment-header">
-                      <div class="comment-author-wrapper">
-                          <span class="comment-author ${info.replyTo ? 'es-respuesta' : ''}">${escaperHtml(info.autor)}</span>
-                          ${badgeAutorHtml}
-                          <span class="comment-date">${textoFecha}</span>
-                      </div>
-                      <button class="action-btn delete-btn" data-id="${idComentario}"><i class="fas fa-trash-alt"></i></button>
-                  </div>
-                  ${replyContextHtml}
-                  <p class="comment-text">${escaperHtml(info.texto)}</p>
-                  <div class="comment-actions">
-                      <button class="action-btn like-btn ${claseLiked}" data-id="${idComentario}">
-                          <i class="fas fa-heart" style="color: ${colorCorazon}"></i> <span>${info.likes || 0}</span>
-                      </button>
-                      <button class="action-btn reply-btn" data-id="${idComentario}" data-author="${escaperHtml(info.autor)}">
-                          <i class="fas fa-comment-dots"></i> Responder
-                      </button>
-                  </div>
-              `;
-
-              card.querySelector(".like-btn").addEventListener("click", (e) => {
-                  const haDadoLike = localStorage.getItem(`liked_${idComentario}`);
-                  const refLike = ref(database, `comentarios/${nombreCap}/${idComentario}/likes`);
-                  
-                  if (!haDadoLike) {
-                      localStorage.setItem(`liked_${idComentario}`, 'true');
-                      e.currentTarget.classList.add("liked");
-                      e.currentTarget.querySelector("i").style.color = "#0084ff";
-                      window.crearEfectoLluviaCorazones(e); 
-                      runTransaction(refLike, (actual) => (actual || 0) + 1);
-                  } else {
-                      localStorage.removeItem(`liked_${idComentario}`);
-                      e.currentTarget.classList.remove("liked");
-                      e.currentTarget.querySelector("i").style.color = "#555";
-                      runTransaction(refLike, (actual) => {
-                          let nuevoValor = (actual || 0) - 1;
-                          return nuevoValor < 0 ? 0 : nuevoValor; 
-                      });
-                  }
-              });
-
-              card.querySelector(".delete-btn").addEventListener("click", (e) => {
-                  if (confirm("¿Seguro que quieres eliminar tu comentario?")) {
-                      window.crearEfectoExplosionComentario(e.currentTarget, card); 
-                      setTimeout(() => {
-                          remove(ref(database, `comentarios/${nombreCap}/${idComentario}`));
-                      }, 400);
-                  }
-              });
-
-              card.querySelector(".reply-btn").addEventListener("click", (e) => {
-                  const id = e.currentTarget.getAttribute("data-id");
-                  const author = e.currentTarget.getAttribute("data-author");
-                  window.setReplyState(id, author);
-              });
-
-              contenedorHtml.appendChild(card);
-          });
-
-          if (scrollAlFinal) {
-              setTimeout(() => {
-                  const seccionComentarios = document.getElementById("seccion-comentarios-root");
-                  if (seccionComentarios) {
-                      seccionComentarios.scrollIntoView({ behavior: "smooth" });
-                  }
-              }, 300);
-          }
-      });
-  };
-
-  window.intentarPublicarComentario = function(nombreCap, autor, texto) {
-      let esAutorReal = false;
-      const nameLimpio = autor.trim();
-
-      if (nameLimpio === "Raylin AC") {
-          if (localStorage.getItem("autor_autenticado") === "true") {
-              esAutorReal = true;
-          } else {
-              const pass = prompt("Contraseña de seguridad:");
-              if (pass === CLAVE_SECRETA_AUTOR) {
-                  esAutorReal = true;
-                  localStorage.setItem("autor_autenticado", "true"); 
-                  window.verificarYBloquearNombre(); 
-              } else {
-                  alert("Incorrecta.");
-                  return; 
-              }
-          }
-      } else if (!localStorage.getItem("mi_nombre_fijo")) {
-          localStorage.setItem("mi_nombre_fijo", nameLimpio);
-          window.verificarYBloquearNombre();
-      }
-
-      const refComentarios = ref(database, 'comentarios/' + nombreCap);
-      const nuevoComentarioRef = push(refComentarios);
-      const idNuevoComentario = nuevoComentarioRef.key;
-
-      const dataParaGuardar = {
-          autor: esAutorReal ? "Raylin AC" : localStorage.getItem("mi_nombre_fijo"),
-          texto: texto,
-          likes: 0,
-          esAutor: esAutorReal, 
-          fecha: serverTimestamp()
-      };
-
-      if (replyState.commentId) {
-          dataParaGuardar.replyTo = {
-              id: replyState.commentId,
-              author: replyState.authorName
-          };
-      }
-
-      set(nuevoComentarioRef, dataParaGuardar).then(() => {
-          let misComentarios = JSON.parse(localStorage.getItem("mis_comentarios_v3") || "[]");
-          misComentarios.push(idNuevoComentario);
-          localStorage.setItem("mis_comentarios_v3", JSON.stringify(misComentarios));
-          window.cancelReply();
-      });
-  };
-
-  function escaperHtml(texto) {
-      if (!texto) return "";
-      return texto.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-  }
-
-  // --- LÓGICA DE GITHUB ---
-  const usuario = "railinc035-gif";
-  const repo = "Mizuvichi";
-  const api = `https://api.github.com/repos/${usuario}/${repo}/contents`;
-
-  let listaCapitulosGuardados = [];
-  let indiceCapituloActual = -1;
-
-  const nombresDeCapitulos = {
-      "Cap_01": "Capítulo 01: Funeral para nadie"
-  };
-
-  function formatearNombreCapitulo(nombreCarpeta) {
-      if (nombresDeCapitulos[nombreCarpeta]) {
-          return nombresDeCapitulos[nombreCarpeta];
-      }
-      return nombreCarpeta.replace("Cap_", "Capítulo ");
-  }
-
-  window.crearEfectoLluviaCorazones = function(e) {
-      const emojis = ['❤️', '✨', '🔥', '💖'];
-      const rootSeccion = document.getElementById("seccion-comentarios-root");
-      const boundsRoot = rootSeccion.getBoundingClientRect();
-      const boundsBtn = e.currentTarget.getBoundingClientRect();
-      const xOriginal = boundsBtn.left - boundsRoot.left + boundsBtn.width / 2;
-      const yOriginal = boundsBtn.top - boundsRoot.top + boundsBtn.height / 2;
-
-      for (let i = 0; i < 12; i++) {
-          const span = document.createElement('span');
-          span.className = 'floating-emoji';
-          span.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-          span.style.left = `${xOriginal}px`;
-          span.style.top = `${yOriginal}px`;
-          const angulo = (Math.random() * 120 + 30) * (Math.PI / 180); 
-          const velocidad = Math.random() * 100 + 50;
-          const xDestino = Math.cos(angulo) * velocidad * (Math.random() > 0.5 ? 1 : -1);
-          const yDestino = -Math.sin(angulo) * velocidad - 30; 
-          span.style.setProperty('--x', `${xDestino}px`);
-          span.style.setProperty('--y', `${yDestino}px`);
-          rootSeccion.appendChild(span);
-          span.addEventListener('animationend', () => span.remove());
-      }
-  };
-
-  window.crearEfectoExplosionComentario = function(botonClicado, elementoCard) {
-      const rootSeccion = document.getElementById("seccion-comentarios-root");
-      const boundsRoot = rootSeccion.getBoundingClientRect();
-      const boundsBtn = botonClicado.getBoundingClientRect();
-      const colores = ['#ff0000', '#b30000', '#300000', '#555555', '#222222'];
-      elementoCard.style.opacity = '0';
-      const xCentro = boundsBtn.left - boundsRoot.left + boundsBtn.width / 2;
-      const yCentro = boundsBtn.top - boundsRoot.top + boundsBtn.height / 2;
-
-      for (let i = 0; i < 40; i++) {
-          const particula = document.createElement('div');
-          particula.className = 'particle-fx';
-          particula.style.left = `${xCentro}px`;
-          particula.style.top = `${yCentro}px`;
-          particula.style.background = colores[Math.floor(Math.random() * colores.length)];
-          const mx = (Math.random() - 0.5) * 250; 
-          const my = (Math.random() * 150) - 50;  
-          particula.style.setProperty('--mx', `${mx}px`);
-          particula.style.setProperty('--my', `${my}px`);
-          rootSeccion.appendChild(particula);
-          particula.addEventListener('animationend', () => particula.remove());
-      }
-  };
-
-  async function cargarAvisos() {
-      const contenedorAvisos = document.getElementById("aviso-container");
-      try {
-          const respuesta = await fetch(`${api}/Aviso`);
-          if (!respuesta.ok) { contenedorAvisos.parentElement.style.display = "none"; return; }
-          const archivos = await respuesta.json();
-          const pngs = archivos.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true}));
-          if (pngs.length === 0) { contenedorAvisos.parentElement.style.display = "none"; return; }
-
-          const ultimoAvisoVisto = localStorage.getItem("ultimo_aviso_visto");
-          const idUltimoAviso = pngs[0].name;
-
-          pngs.forEach((img, index) => {
-              const wrapper = document.createElement("div");
-              wrapper.className = "aviso-wrapper";
-              if (index === 0 && ultimoAvisoVisto !== idUltimoAviso) {
-                  const tag = document.createElement("span");
-                  tag.className = "badge-nuevo";
-                  tag.innerText = "Nuevo";
-                  tag.onclick = () => { localStorage.setItem("ultimo_aviso_visto", idUltimoAviso); tag.style.display = "none"; };
-                  wrapper.appendChild(tag);
-                  setTimeout(() => { localStorage.setItem("ultimo_aviso_visto", idUltimoAviso); if (tag) tag.style.opacity = "0"; setTimeout(() => { if(tag) tag.style.display = "none"; }, 500); }, 10000);
-              }
-              const imageElement = document.createElement("img");
-              imageElement.src = obtenerUrlCDN(img.download_url);
-              imageElement.loading = "lazy";
-              imageElement.decoding = "async";
-              wrapper.appendChild(imageElement);
-              contenedorAvisos.appendChild(wrapper);
-          });
-      } catch (error) { contenedorAvisos.parentElement.style.display = "none"; }
-  }
-
-  // --- LÓGICA DE LA GALERÍA MANGA PLUS ---
-
-  const seriesData = {
-      "thalesis": {
-          id: "thalesis",
-          title: "Thalesis",
-          type: "manga",
-          status: "pausa", // Valores: "emision" | "pausa" | "terminado"
-          cover: obtenerUrlCDN("https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png"),
-          description: "Taiga, un joven creado artificialmente en las profundas instalaciones de Aerin Thalesis, sobrevive con un único propósito: vengar a los amigos que vio morir en manos de sus creadores. Sin embargo, tras ser secuestrado de nuevo por el sádico Dr. Bachino, una verdad devastadora destruye su cordura.",
-          author: "Raylin AC",
-          chapters: []
-      },
-      "mizuvichi": {
-          id: "mizuvichi",
-          title: "Mizuvichi",
-          type: "one-shot",
-          status: "terminado", // Valores: "emision" | "pausa" | "terminado"
-          cover: obtenerUrlCDN("https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png"),
-          description: "Una obra única auto-conclusiva (One Shot) que te atrapará con su increíble arte y profunda narrativa.",
-          author: "Raylin AC",
-          chapters: []
-      }
-  };
-
-  let activeSeriesId = null;
-
-  function buscarPortadaEnItems(items) {
-      if (!items || !Array.isArray(items)) return null;
-      // Busca un archivo que se llame "portada" o "cover" (caso insensible)
-      const fileMatch = items.find(item => item.type === "file" && /^(portada|cover)$/i.test(item.name.split('.')[0]));
-      if (fileMatch) {
-          return obtenerUrlCDN(fileMatch.download_url);
-      }
-      return null;
-  }
-
-  async function inicializarGaleria() {
-      try {
-          const respuesta = await fetch(api);
-          const archivos = await respuesta.json();
-
-          // Reiniciamos los capítulos de las series predefinidas
-          seriesData.thalesis.chapters = [];
-          seriesData.mizuvichi.chapters = [];
-
-          // Identificar si existen carpetas de categoría: "manga" o "one shot" (o similares)
-          const mangaCatDir = archivos.find(item => item.type === "dir" && /^manga[s]?$/i.test(item.name));
-          const oneShotCatDir = archivos.find(item => item.type === "dir" && /^(one[-_\s]?shot[s]?|one)$/i.test(item.name));
-
-          // Guardamos qué carpetas procesaremos de forma especial para no duplicarlas en la compatibilidad hacia atrás
-          const especialDirs = ["aviso", "scripts", ".github"];
-          if (mangaCatDir) especialDirs.push(mangaCatDir.name.toLowerCase());
-          if (oneShotCatDir) especialDirs.push(oneShotCatDir.name.toLowerCase());
-
-          // 1. Procesar carpeta de categoría MANGA
-          if (mangaCatDir) {
-              const r = await fetch(`${api}/${encodeURIComponent(mangaCatDir.name)}`);
-              const subFolders = await r.json();
-              const seriesDirs = subFolders.filter(item => item.type === "dir");
-
-              for (const sDir of seriesDirs) {
-                  const sId = sDir.name.toLowerCase().replace(/[\s-_]+/g, "_");
-                  if (!seriesData[sId]) {
-                      seriesData[sId] = {
-                          id: sId,
-                          title: sDir.name.replace(/_/g, " ").replace(/-/g, " "),
-                          type: "manga",
-                          status: "emision", // Por defecto en emisión para nuevas series
-                          cover: obtenerUrlCDN("https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png"), // fallback
-                          description: `Una increíble obra titulada ${sDir.name.replace(/_/g, " ").replace(/-/g, " ")}. ¡Disfrútala en la galería!`,
-                          author: "Raylin AC",
-                          chapters: []
-                      };
-                  }
-
-                  // Obtenemos los elementos directamente dentro de la carpeta de la serie
-                  const r2 = await fetch(`${api}/${encodeURIComponent(mangaCatDir.name)}/${encodeURIComponent(sDir.name)}`);
-                  const sItems = await r2.json();
-
-                  // Detección súper flexible de portada (archivo portada/cover)
-                  const portadaUrl = buscarPortadaEnItems(sItems);
-                  if (portadaUrl) {
-                      seriesData[sId].cover = portadaUrl;
-                      seriesData[sId].hasPortada = true;
-                  }
-
-                  // Comprobamos si tiene imágenes PNG directamente dentro (excluyendo la portada)
-                  const directPngs = sItems.filter(p => p.type === "file" && p.name.toLowerCase().endsWith(".png") && !/^(portada|cover)$/i.test(p.name.split('.')[0])).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
-
-                  if (directPngs.length > 0) {
-                      // Si hay imágenes directas, es un capítulo único directo
-                      seriesData[sId].chapters.push({ name: "Capítulo Único", uniqueId: sId + "_direct", images: directPngs });
-                  } else {
-                      // Si no, escaneamos las subcarpetas como capítulos
-                      const validCapDirs = sItems.filter(item => item.type === "dir" && !/^(portada|cover)$/i.test(item.name));
-
-                      for (const cDir of validCapDirs) {
-                          const r3 = await fetch(`${api}/${encodeURIComponent(mangaCatDir.name)}/${encodeURIComponent(sDir.name)}/${encodeURIComponent(cDir.name)}`);
-                          const subFiles = await r3.json();
-                          const pngs = subFiles.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
-                          if (pngs.length === 0) continue;
-
-                          // Si es la serie principal "thalesis", usamos el nombre directo del capítulo (como "Cap_01")
-                          // para restaurar y mantener los contadores históricos y comentarios existentes de Firebase.
-                          // Para otras series de manga, usamos un ID prefijado exclusivo e independiente.
-                          const uniqueId = sId === "thalesis" ? cDir.name : sId + "_" + cDir.name;
-                          seriesData[sId].chapters.push({ name: cDir.name, uniqueId: uniqueId, images: pngs });
-                      }
-                  }
-
-                  // Si la serie tiene cero capítulos, la ponemos automáticamente como "Muy pronto"
-                  if (seriesData[sId].chapters.length === 0) {
-                      seriesData[sId].status = "pronto";
-                  }
-              }
+          } catch (e) {
+              console.error("Error auto-detectando favicon:", e);
           }
 
-          // 2. Procesar carpeta de categoría ONE SHOT
-          if (oneShotCatDir) {
-              const r = await fetch(`${api}/${encodeURIComponent(oneShotCatDir.name)}`);
-              const subFolders = await r.json();
-              const seriesDirs = subFolders.filter(item => item.type === "dir");
-
-              for (const sDir of seriesDirs) {
-                  const sId = sDir.name.toLowerCase().replace(/[\s-_]+/g, "_");
-                  if (!seriesData[sId]) {
-                      seriesData[sId] = {
-                          id: sId,
-                          title: sDir.name.replace(/_/g, " ").replace(/-/g, " "),
-                          type: "one-shot",
-                          status: "terminado", // One shots suelen considerarse terminados
-                          cover: obtenerUrlCDN("https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png"), // fallback
-                          description: `Un increíble One Shot titulado ${sDir.name.replace(/_/g, " ").replace(/-/g, " ")}.`,
-                          author: "Raylin AC",
-                          chapters: []
-                      };
-                  }
-
-                  // Obtenemos los elementos directamente dentro de la carpeta de la serie
-                  const r2 = await fetch(`${api}/${encodeURIComponent(oneShotCatDir.name)}/${encodeURIComponent(sDir.name)}`);
-                  const sItems = await r2.json();
-
-                  // Detección súper flexible de portada (archivo portada/cover)
-                  const portadaUrl = buscarPortadaEnItems(sItems);
-                  if (portadaUrl) {
-                      seriesData[sId].cover = portadaUrl;
-                      seriesData[sId].hasPortada = true;
-                  }
-
-                  // Comprobamos si tiene imágenes PNG directamente dentro (excluyendo la portada)
-                  const directPngs = sItems.filter(p => p.type === "file" && p.name.toLowerCase().endsWith(".png") && !/^(portada|cover)$/i.test(p.name.split('.')[0])).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
-
-                  if (directPngs.length > 0) {
-                      // Si hay imágenes directas, es un capítulo único directo (muy común en One Shots)
-                      seriesData[sId].chapters.push({ name: "Capítulo Único", uniqueId: sId + "_direct", images: directPngs });
-                  } else {
-                      // Si no, escaneamos las subcarpetas como capítulos
-                      const validCapDirs = sItems.filter(item => item.type === "dir" && !/^(portada|cover)$/i.test(item.name));
-
-                      for (const cDir of validCapDirs) {
-                          const r3 = await fetch(`${api}/${encodeURIComponent(oneShotCatDir.name)}/${encodeURIComponent(sDir.name)}/${encodeURIComponent(cDir.name)}`);
-                          const subFiles = await r3.json();
-                          const pngs = subFiles.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
-                          if (pngs.length === 0) continue;
-
-                          seriesData[sId].chapters.push({ name: cDir.name, uniqueId: sId + "_" + cDir.name, images: pngs });
-                      }
-                  }
-
-                  // Si la serie tiene cero capítulos, la ponemos automáticamente como "Muy pronto"
-                  if (seriesData[sId].chapters.length === 0) {
-                      seriesData[sId].status = "pronto";
-                  }
-              }
-          }
-
-          // 3. Procesar carpetas en la raíz (compatibilidad hacia atrás)
-          const rootFolders = archivos.filter(item => item.type === "dir" && !especialDirs.includes(item.name.toLowerCase()) && !item.name.startsWith("."));
-
-          for (const folder of rootFolders) {
-              const folderApi = `${api}/${folder.name}`;
-              const folderResp = await fetch(folderApi);
-              const paginas = await folderResp.json();
-              const pngs = paginas.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
-              if (pngs.length === 0) continue;
-
-              const chapterObj = { name: folder.name, uniqueId: folder.name, images: pngs };
-
-              if (folder.name.startsWith("Cap_") || folder.name.startsWith("Manga_")) {
-                  seriesData.thalesis.chapters.push(chapterObj);
-              } else {
-                  seriesData.mizuvichi.chapters.push(chapterObj);
-              }
-          }
-
-          // Ordenar los capítulos de forma descendente en todas las series
-          Object.values(seriesData).forEach(series => {
-              series.chapters.sort((a, b) => b.name.localeCompare(a.name));
-              // Si tiene capítulos, actualizamos el cover dinámicamente con la primera página del primer capítulo
-              if (series.chapters.length > 0) {
-                  series.cover = obtenerUrlCDN(series.chapters[series.chapters.length - 1].images[0].download_url);
-              }
-          });
-
-          // Frases de índice literal para buscar fácilmente en el código fuente
-          const listaDescripcionesFijas = [
-              "Indice 01",
-              "Indice 02",
-              "Indice 03",
-              "Indice 04",
-              "Indice 05",
-              "Indice 06",
-              "Indice 07",
-              "Indice 08",
-              "Indice 09",
-              "Indice 10",
-              "Indice 11",
-              "Indice 12",
-              "Indice 13",
-              "Indice 14",
-              "Indice 15",
-              "Indice 16",
-              "Indice 17",
-              "Indice 18",
-              "Indice 19",
-              "Indice 20"
-          ];
-
-          // Asignar descripción secuencial única para cada serie activa usando la lista literal (excepto Thalesis y Mizuvichi que tienen descripciones fijas personalizadas)
-          let indexCounter = 0;
-          Object.values(seriesData).forEach(series => {
-              if (series.chapters.length > 0) {
-                  if (series.id !== "thalesis" && series.id !== "mizuvichi") {
-                      series.description = listaDescripcionesFijas[indexCounter] || `Indice ${String(indexCounter + 1).padStart(2, '0')}`;
-                      indexCounter++;
-                  }
-              }
-          });
-
-          // Renderizar tarjetas de series
-          renderizarTarjetasGaleria();
-
-          // Comprobar rutas en hash al cargar
-          comprobarRutasHash();
-
-      } catch (error) {
-          console.error("Error cargando la galería:", error);
-      }
-  }
-
-  function renderizarTarjetasGaleria() {
-      const gridManga = document.getElementById("grid-manga");
-      const gridOneShot = document.getElementById("grid-one-shot");
-
-      gridManga.innerHTML = "";
-      gridOneShot.innerHTML = "";
-
-      let countManga = 0;
-      let countOneShot = 0;
-
-      Object.values(seriesData).forEach(series => {
-          if (series.chapters.length === 0 && series.status !== "pronto") {
-              return; // No mostramos series vacías en la galería, a menos que sean Muy Pronto
-          }
-
-          const card = document.createElement("div");
-          card.className = "series-card";
-          card.setAttribute("data-type", series.type);
-
-          let cardBadgeHtml = `<span class="series-badge ${series.type}">${series.type}</span>`;
-          if (series.status === "pronto") {
-              cardBadgeHtml = `<span class="series-badge" style="border-color:#ffd700; color:#ffd700; text-shadow:0 0 5px #ffd700;">Muy Pronto</span>`;
-          }
-
-          card.innerHTML = `
-              <div class="series-cover-wrapper">
-                  ${cardBadgeHtml}
-                  <img class="series-cover" src="${series.cover}" alt="${series.title}" loading="lazy">
-              </div>
-              <div class="series-info">
-                  <h3 class="series-title">${series.title}</h3>
-                  <span class="series-author">Por ${series.author}</span>
-              </div>
-          `;
-
-          card.addEventListener("click", () => {
-              irADetalleSerie(series.id);
-          });
-
-          if (series.type === "manga") {
-              gridManga.appendChild(card);
-              countManga++;
-          } else {
-              gridOneShot.appendChild(card);
-              countOneShot++;
-          }
-      });
-
-      if (countManga === 0) {
-          gridManga.innerHTML = `<p style="color: #666; font-size: 1.1rem; text-align: center; grid-column: 1 / -1; margin: 40px 0; font-style: italic;">No hay mangas disponibles por el momento.</p>`;
-      }
-      if (countOneShot === 0) {
-          gridOneShot.innerHTML = `<p style="color: #666; font-size: 1.1rem; text-align: center; grid-column: 1 / -1; margin: 40px 0; font-style: italic;">No hay One Shots disponibles por el momento.</p>`;
-      }
-  }
-
-  function irADetalleSerie(seriesId, scroll = true) {
-      activeSeriesId = seriesId;
-      window.location.hash = `serie=${seriesId}`;
-
-      const series = seriesData[seriesId];
-      if (!series) return;
-
-      document.getElementById("series-poster").src = obtenerUrlCDN(series.cover);
-      document.getElementById("series-title").innerText = series.title;
-      document.getElementById("series-author").innerText = `Autor: ${series.author}`;
-      document.getElementById("series-desc").innerText = series.description;
-
-      // Renderizar etiqueta de estado de la serie (Verde en emisión, Blanco en pausa, Rojo en terminado)
-      let labelStatus = "";
-      let statusClass = series.status || "emision";
-      if (series.type === "one-shot") {
-          labelStatus = "Terminado";
-          statusClass = "terminado";
-      } else {
-          if (statusClass === "emision") labelStatus = "En emisión";
-          else if (statusClass === "pausa") labelStatus = "En pausa";
-          else if (statusClass === "terminado") labelStatus = "Terminado";
-          else if (statusClass === "pronto") labelStatus = "Muy pronto";
-      }
-
-      const metaContainer = document.querySelector("#series-detail-container .series-detail-meta");
-      if (metaContainer) {
-          // Eliminar badge anterior si existe para evitar duplicación
-          const oldBadge = metaContainer.querySelector(".status-badge");
-          if (oldBadge) oldBadge.remove();
-
-          // Crear y añadir nuevo badge de estado
-          const badgeSpan = document.createElement("span");
-          if (statusClass === "pronto") {
-              badgeSpan.className = `status-badge`;
-              badgeSpan.style.cssText = "background: rgba(255, 215, 0, 0.1); color: #ffd700; border: 1px solid #ffd700; box-shadow: 0 0 8px rgba(255, 215, 0, 0.2);";
-          } else {
-              badgeSpan.className = `status-badge ${statusClass}`;
-          }
-          badgeSpan.innerText = labelStatus;
-          metaContainer.appendChild(badgeSpan);
-      }
-
-      // Renderizar capítulos de esta serie
-      const contenedorCapitulos = document.getElementById("chapters");
-      contenedorCapitulos.innerHTML = "";
-
-      // Copiamos la lista de capítulos de esta serie a la variable global listaCapitulosGuardados
-      // para que el visor pueda navegar secuencialmente entre ellos
-      listaCapitulosGuardados = series.chapters;
-
-      if (listaCapitulosGuardados.length === 0) {
-          if (statusClass === "pronto") {
-              contenedorCapitulos.innerHTML = `
-              <div style='text-align:center; padding:40px 20px; background:#0a0a0a; border:1px solid #1a1a1a; border-radius:12px; margin-top:20px;'>
-                  <span style='font-size:3rem;'>⏳</span>
-                  <h3 style='margin:15px 0 10px 0; color:#ffd700;'>¡Muy pronto!</h3>
-                  <p style='color:#888; font-size:0.95rem; max-width:400px; margin:0 auto;'>Esta obra está en preparación. ¡Muy pronto subiremos el primer capítulo, mantente atento!</p>
-              </div>`;
-          } else {
-              contenedorCapitulos.innerHTML = `<p style="color:#666; font-size:1rem; text-align:center; margin:30px 0;">¡Próximamente nuevos capítulos!</p>`;
-          }
-      } else {
-          listaCapitulosGuardados.forEach((cap) => {
-              const card = document.createElement("div");
-              card.className = "chapter";
-              
-              // Determinar título del capítulo (sin numeración si es One Shot)
-              let tituloCap = "";
-              if (series.type === "one-shot") {
-                  tituloCap = "Leer One Shot";
-              } else {
-                  tituloCap = formatearNombreCapitulo(cap.name);
-              }
-
-              card.innerHTML = `
-              <div class="chapter-header">
-                  <div class="chapter-left">
-                      <img class="chapter-thumb" src="${obtenerUrlCDN(cap.images[0].download_url)}">
-                      <div><h3>${tituloCap}</h3><div class="chapter-views" id="views-${cap.uniqueId}">...</div></div>
-                  </div>
-                  <div>▶</div>
-              </div>
-              `;
-              card.querySelector(".chapter-header").addEventListener("click", () => {
-                  const index = listaCapitulosGuardados.findIndex(c => c.name === cap.name);
-                  window.abrirVisor(index);
-              });
-              contenedorCapitulos.appendChild(card);
-              window.escucharVisitasCapitulo(cap.uniqueId, card.querySelector(`#views-${cap.uniqueId}`));
-          });
-      }
-
-      // Switch views
-      document.getElementById("gallery-home-section").style.display = "none";
-      document.getElementById("aviso-section").style.display = "none";
-      document.getElementById("series-detail-container").style.display = "block";
-
-      if (scroll) {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-  }
-
-  function volverALagaleria() {
-      activeSeriesId = null;
-      history.pushState("", document.title, window.location.pathname + window.location.search);
-      document.getElementById("series-detail-container").style.display = "none";
-      document.getElementById("gallery-home-section").style.display = "block";
-      document.getElementById("aviso-section").style.display = "block";
-  }
-
-  function comprobarRutasHash() {
-      const hash = window.location.hash;
-      if (hash.startsWith("#capitulo=")) {
-          const nombreCap = hash.replace("#capitulo=", "");
-          // Buscamos a qué serie pertenece
-          let serieEncontrada = null;
-          let capIndex = -1;
-
-          for (const sId in seriesData) {
-              const idx = seriesData[sId].chapters.findIndex(c => c.name === nombreCap);
-              if (idx !== -1) {
-                  serieEncontrada = sId;
-                  capIndex = idx;
-                  break;
-              }
-          }
-
-          if (serieEncontrada && capIndex !== -1) {
-              irADetalleSerie(serieEncontrada, false);
-              window.abrirVisor(capIndex);
-          }
-      } else if (hash.startsWith("#serie=")) {
-          const seriesId = hash.replace("#serie=", "");
-          if (seriesData[seriesId]) {
-              irADetalleSerie(seriesId);
-          }
-      } else {
-          // Si no hay hash de detalle o visor, nos aseguramos de mostrar la galería
-          document.getElementById("viewer-container").style.display = "none";
-          document.body.style.overflow = "auto";
-          document.getElementById("series-detail-container").style.display = "none";
-          document.getElementById("gallery-home-section").style.display = "block";
-          document.getElementById("aviso-section").style.display = "block";
-      }
-  }
-
-  window.addEventListener("hashchange", comprobarRutasHash);
-
-  let viewerLazyObserver = null;
-
-  function inicializarLazyObserver() {
-      if (viewerLazyObserver) return;
-      viewerLazyObserver = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-              if (entry.isIntersecting) {
-                  const wrapper = entry.target;
-                  const img = wrapper.querySelector('img');
-                  if (img && img.hasAttribute("data-src")) {
-                      img.src = img.getAttribute("data-src");
-                      img.removeAttribute("data-src");
-                  }
-                  viewerLazyObserver.unobserve(wrapper);
-              }
-          });
-      }, {
-          root: document.getElementById("viewer-container"),
-          rootMargin: "1200px 0px" // Carga las páginas 1200px antes de que entren en pantalla para una fluidez óptima
-      });
-  }
-
-  window.abrirVisor = function(index, scrollAComentarios = false) {
-      if (index < 0 || index >= listaCapitulosGuardados.length) return;
-      window.cancelReply();
-      indiceCapituloActual = index;
-      const capitulo = listaCapitulosGuardados[indiceCapituloActual];
-      window.location.hash = `capitulo=${capitulo.name}`;
-      
-      // Aseguramos que el observador de carga perezosa esté inicializado
-      inicializarLazyObserver();
-
-      // Obtener serie activa para comprobar el tipo y omitir numeración si es One Shot
-      const activeSeries = seriesData[activeSeriesId];
-      let tituloFormateado = "";
-      if (activeSeries && activeSeries.type === "one-shot") {
-          tituloFormateado = activeSeries.title; // Sólo el título de la obra
-      } else {
-          tituloFormateado = formatearNombreCapitulo(capitulo.name);
-      }
-
-      document.getElementById("viewer-title").innerText = tituloFormateado;
-      document.getElementById("viewer-title-bottom").innerText = tituloFormateado;
-
-      const contentDiv = document.getElementById("viewer-content");
-      contentDiv.innerHTML = ""; 
-      
-      // Creamos un DocumentFragment para acumular todas las imágenes en memoria,
-      // evitando reflows intermedios y reduciendo drásticamente el uso de CPU/GPU.
-      const fragment = document.createDocumentFragment();
-      
-      capitulo.images.forEach((img, i) => {
-          // Crear contenedor del wrapper de la página
-          const wrapper = document.createElement("div");
-          wrapper.className = "viewer-page-wrapper";
-
-          // Crear la "bolita de carga" (spinner)
-          const spinner = document.createElement("div");
-          spinner.className = "loading-spinner";
-          wrapper.appendChild(spinner);
-
-          // Crear la imagen
-          const imageElement = document.createElement("img");
-          imageElement.decoding = "async";
-          
-          if (i < 3) {
-              imageElement.loading = "eager";
-              imageElement.setAttribute("fetchpriority", "high");
-          } else {
-              imageElement.loading = "lazy";
-          }
-
-          // Función para manejar la finalización de carga de la imagen
-          const alCargarImagen = () => {
-              imageElement.classList.add("loaded");
-              spinner.style.opacity = "0";
-              // Eliminar el spinner del DOM después de la transición de opacidad
-              setTimeout(() => {
-                  if (spinner.parentNode) {
-                      spinner.remove();
-                  }
-              }, 300);
-
-              // Si la imagen tiene dimensiones válidas, ajustar aspect-ratio del contenedor
-              if (imageElement.naturalWidth && imageElement.naturalHeight) {
-                  const ratio = imageElement.naturalWidth / imageElement.naturalHeight;
-                  wrapper.style.aspectRatio = ratio;
-              }
-          };
-
-          imageElement.onload = alCargarImagen;
-          imageElement.onerror = () => {
-              // En caso de error, ocultamos el spinner para no bloquear visualmente
-              spinner.style.opacity = "0";
-              setTimeout(() => { if (spinner.parentNode) spinner.remove(); }, 300);
-          };
-
-          // Asignar el src de forma inteligente:
-          // Las primeras 3 páginas se cargan inmediatamente para lectura instantánea,
-          // las demás se difieren al IntersectionObserver para evitar congelamientos ("frizado") de pantalla.
-          const imgUrl = obtenerUrlCDN(img.download_url);
-          if (i < 3) {
-              imageElement.src = imgUrl;
-              if (imageElement.complete) {
-                  alCargarImagen();
-              }
-          } else {
-              imageElement.setAttribute("data-src", imgUrl);
-              viewerLazyObserver.observe(wrapper);
-          }
-
-          wrapper.appendChild(imageElement);
-          fragment.appendChild(wrapper);
-      });
-      
-      contentDiv.appendChild(fragment);
-      
-      const esPrimero = indiceCapituloActual === 0;
-      const esUltimo = indiceCapituloActual === listaCapitulosGuardados.length - 1;
-
-      document.getElementById("btn-prev").disabled = esUltimo;
-      document.getElementById("btn-prev-bottom").disabled = esUltimo;
-      document.getElementById("btn-next").disabled = esPrimero;
-      document.getElementById("btn-next-bottom").disabled = esPrimero;
-      document.getElementById("viewer-container").style.display = "block";
-      document.getElementById("viewer-container").scrollTop = 0;
-      document.body.style.overflow = "hidden";
-      window.verificarYBloquearNombre();
-      window.registrarVisitaCapitulo(capitulo.uniqueId);
-
-      // Diferimos la carga pesada de los comentarios en 200ms para liberar el hilo principal del navegador
-      setTimeout(() => {
-          window.cargarComentariosDelCapitulo(capitulo.uniqueId, document.getElementById("lista-comentarios"), scrollAComentarios);
-      }, 200);
-  }
-
-  document.getElementById("formulario-comentario").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const cap = listaCapitulosGuardados[indiceCapituloActual];
-      if (cap) {
-          window.intentarPublicarComentario(cap.uniqueId, document.getElementById("comentario-nombre").value, document.getElementById("comentario-texto").value);
-          document.getElementById("comentario-texto").value = "";
-      }
-  });
-
-  const cerrarVisor = () => {
-      document.getElementById("viewer-container").style.display = "none";
-      document.body.style.overflow = "auto";
-      if (activeSeriesId) {
-          window.location.hash = `serie=${activeSeriesId}`;
-      } else {
-          history.pushState("", document.title, window.location.pathname + window.location.search);
-      }
-  };
-
-  document.getElementById("btn-close").addEventListener("click", cerrarVisor);
-  document.getElementById("btn-close-bottom").addEventListener("click", cerrarVisor);
-
-  document.getElementById("btn-cancel-reply").addEventListener("click", window.cancelReply);
-  
-  const irAnterior = () => window.abrirVisor(indiceCapituloActual + 1);
-  const irSiguiente = () => window.abrirVisor(indiceCapituloActual - 1);
-
-  document.getElementById("btn-prev").addEventListener("click", irAnterior);
-  document.getElementById("btn-prev-bottom").addEventListener("click", irAnterior);
-  document.getElementById("btn-next").addEventListener("click", irSiguiente);
-  document.getElementById("btn-next-bottom").addEventListener("click", irSiguiente);
-
-  let ultimoScroll = 0;
-  const visorContainer = document.getElementById("viewer-container");
-  const barraNav = document.getElementById("viewer-nav");
-  visorContainer.addEventListener("scroll", () => {
-      let scrollActual = visorContainer.scrollTop;
-      if (scrollActual > ultimoScroll && scrollActual > 50) barraNav.classList.add("hidden"); 
-      else barraNav.classList.remove("hidden");
-      ultimoScroll = scrollActual;
-  });
-
-  const iniciarTodo = () => {
-      window.registrarVisitaInicio();
-      window.escucharVisitasGlobales();
-      cargarAvisos();
-      inicializarGaleria();
-
-      // Configuración de los botones de pestañas (Tabs)
-      const tabBtns = document.querySelectorAll(".tab-btn");
-      tabBtns.forEach(btn => {
-          btn.addEventListener("click", () => {
-              tabBtns.forEach(b => b.classList.remove("active"));
-              btn.classList.add("active");
-
-              const targetTab = btn.getAttribute("data-tab");
-              document.querySelectorAll(".gallery-section").forEach(sec => {
-                  sec.classList.remove("active");
-              });
-
-              if (targetTab === "manga") {
-                  document.getElementById("sec-manga").classList.add("active");
-              } else {
-                  document.getElementById("sec-one-shot").classList.add("active");
-              }
-          });
-      });
-
-      // Botón volver a galería
-      document.getElementById("btn-back-gallery").addEventListener("click", volverALagaleria);
-  };
-
-  if (document.readyState === "loading") {
-      window.addEventListener("DOMContentLoaded", iniciarTodo);
-  } else {
-      iniciarTodo();
-  }
-</script>
+        // Reiniciamos los capítulos de las series predefinidas
+        seriesData.thalesis.chapters = [];
+        seriesData.mizuvichi.chapters = [];
+
+        // Identificar si existen carpetas de categoría: "manga" o "one shot" (o similares)
+        const mangaCatDir = archivos.find(item => item.type === "dir" && /^manga[s]?$/i.test(item.name));
+        const oneShotCatDir = archivos.find(item => item.type === "dir" && /^(one[-_\s]?shot[s]?|one)$/i.test(item.name));
+
+        // Guardamos qué carpetas procesaremos de forma especial para no duplicarlas en la compatibilidad hacia atrás
+        const especialDirs = ["aviso", "scripts", ".github"];
+        if (mangaCatDir) especialDirs.push(mangaCatDir.name.toLowerCase());
+        if (oneShotCatDir) especialDirs.push(oneShotCatDir.name.toLowerCase());
+
+        // 1. Procesar carpeta de categoría MANGA
+        if (mangaCatDir) {
+            const r = await fetch(`${api}/${encodeURIComponent(mangaCatDir.name)}`);
+            const subFolders = await r.json();
+            const seriesDirs = subFolders.filter(item => item.type === "dir");
+
+            for (const sDir of seriesDirs) {
+                const sId = sDir.name.toLowerCase().replace(/[\s-_]+/g, "_");
+                if (!seriesData[sId]) {
+                    seriesData[sId] = {
+                        id: sId,
+                        title: sDir.name.replace(/_/g, " ").replace(/-/g, " "),
+                        type: "manga",
+                        status: "emision", // Por defecto en emisión para nuevas series
+                        cover: obtenerUrlCDN("https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png"), // fallback
+                        description: `Una increíble obra titulada ${sDir.name.replace(/_/g, " ").replace(/-/g, " ")}. ¡Disfrútala en la galería!`,
+                        author: "Raylin AC",
+                        chapters: []
+                    };
+                }
+
+                // Obtenemos los elementos directamente dentro de la carpeta de la serie
+                const r2 = await fetch(`${api}/${encodeURIComponent(mangaCatDir.name)}/${encodeURIComponent(sDir.name)}`);
+                const sItems = await r2.json();
+
+                // Detección súper flexible de portada (archivo portada/cover)
+                const portadaUrl = buscarPortadaEnItems(sItems);
+                if (portadaUrl) {
+                    seriesData[sId].cover = portadaUrl;
+                    seriesData[sId].hasPortada = true;
+                }
+
+                // Comprobamos si tiene imágenes PNG directamente dentro (excluyendo la portada)
+                const directPngs = sItems.filter(p => p.type === "file" && p.name.toLowerCase().endsWith(".png") && !/^(portada|cover)$/i.test(p.name.split('.')[0])).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
+
+                if (directPngs.length > 0) {
+                    // Si hay imágenes directas, es un capítulo único directo
+                    seriesData[sId].chapters.push({ name: "Capítulo Único", uniqueId: sId + "_direct", images: directPngs });
+                } else {
+                    // Si no, escaneamos las subcarpetas como capítulos
+                    const validCapDirs = sItems.filter(item => item.type === "dir" && !/^(portada|cover)$/i.test(item.name));
+
+                    for (const cDir of validCapDirs) {
+                        const r3 = await fetch(`${api}/${encodeURIComponent(mangaCatDir.name)}/${encodeURIComponent(sDir.name)}/${encodeURIComponent(cDir.name)}`);
+                        const subFiles = await r3.json();
+                        const pngs = subFiles.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
+                        if (pngs.length === 0) continue;
+
+                        // Si es la serie principal "thalesis", usamos el nombre directo del capítulo (como "Cap_01")
+                        // para restaurar y mantener los contadores históricos y comentarios existentes de Firebase.
+                        // Para otras series de manga, usamos un ID prefijado exclusivo e independiente.
+                        const uniqueId = sId === "thalesis" ? cDir.name : sId + "_" + cDir.name;
+                        seriesData[sId].chapters.push({ name: cDir.name, uniqueId: uniqueId, images: pngs });
+                    }
+                }
+
+                // Si la serie tiene cero capítulos, la ponemos automáticamente como "Muy pronto"
+                if (seriesData[sId].chapters.length === 0) {
+                    seriesData[sId].status = "pronto";
+                }
+            }
+        }
+
+        // 2. Procesar carpeta de categoría ONE SHOT
+        if (oneShotCatDir) {
+            const r = await fetch(`${api}/${encodeURIComponent(oneShotCatDir.name)}`);
+            const subFolders = await r.json();
+            const seriesDirs = subFolders.filter(item => item.type === "dir");
+
+            for (const sDir of seriesDirs) {
+                const sId = sDir.name.toLowerCase().replace(/[\s-_]+/g, "_");
+                if (!seriesData[sId]) {
+                    seriesData[sId] = {
+                        id: sId,
+                        title: sDir.name.replace(/_/g, " ").replace(/-/g, " "),
+                        type: "one-shot",
+                        status: "terminado", // One shots suelen considerarse terminados
+                        cover: obtenerUrlCDN("https://raw.githubusercontent.com/railinc035-gif/Mizuvichi/main/Cap_01/01.png"), // fallback
+                        description: `Un increíble One Shot titulado ${sDir.name.replace(/_/g, " ").replace(/-/g, " ")}.`,
+                        author: "Raylin AC",
+                        chapters: []
+                    };
+                }
+
+                // Obtenemos los elementos directamente dentro de la carpeta de la serie
+                const r2 = await fetch(`${api}/${encodeURIComponent(oneShotCatDir.name)}/${encodeURIComponent(sDir.name)}`);
+                const sItems = await r2.json();
+
+                // Detección súper flexible de portada (archivo portada/cover)
+                const portadaUrl = buscarPortadaEnItems(sItems);
+                if (portadaUrl) {
+                    seriesData[sId].cover = portadaUrl;
+                    seriesData[sId].hasPortada = true;
+                }
+
+                // Comprobamos si tiene imágenes PNG directamente dentro (excluyendo la portada)
+                const directPngs = sItems.filter(p => p.type === "file" && p.name.toLowerCase().endsWith(".png") && !/^(portada|cover)$/i.test(p.name.split('.')[0])).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
+
+                if (directPngs.length > 0) {
+                    // Si hay imágenes directas, es un capítulo único directo (muy común en One Shots)
+                    seriesData[sId].chapters.push({ name: "Capítulo Único", uniqueId: sId + "_direct", images: directPngs });
+                } else {
+                    // Si no, escaneamos las subcarpetas como capítulos
+                    const validCapDirs = sItems.filter(item => item.type === "dir" && !/^(portada|cover)$/i.test(item.name));
+
+                    for (const cDir of validCapDirs) {
+                        const r3 = await fetch(`${api}/${encodeURIComponent(oneShotCatDir.name)}/${encodeURIComponent(sDir.name)}/${encodeURIComponent(cDir.name)}`);
+                        const subFiles = await r3.json();
+                        const pngs = subFiles.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
+                        if (pngs.length === 0) continue;
+
+                        seriesData[sId].chapters.push({ name: cDir.name, uniqueId: sId + "_" + cDir.name, images: pngs });
+                    }
+                }
+
+                // Si la serie tiene cero capítulos, la ponemos automáticamente como "Muy pronto"
+                if (seriesData[sId].chapters.length === 0) {
+                    seriesData[sId].status = "pronto";
+                }
+            }
+        }
+
+        // 3. Procesar carpetas en la raíz (compatibilidad hacia atrás)
+        const rootFolders = archivos.filter(item => item.type === "dir" && !especialDirs.includes(item.name.toLowerCase()) && !item.name.startsWith("."));
+
+        for (const folder of rootFolders) {
+            const folderApi = `${api}/${folder.name}`;
+            const folderResp = await fetch(folderApi);
+            const paginas = await folderResp.json();
+            const pngs = paginas.filter(p => p.name.toLowerCase().endsWith(".png")).sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true}));
+            if (pngs.length === 0) continue;
+
+            const chapterObj = { name: folder.name, uniqueId: folder.name, images: pngs };
+
+            if (folder.name.startsWith("Cap_") || folder.name.startsWith("Manga_")) {
+                seriesData.thalesis.chapters.push(chapterObj);
+            } else {
+                seriesData.mizuvichi.chapters.push(chapterObj);
+            }
+        }
+
+        // Ordenar los capítulos de forma descendente en todas las series
+        Object.values(seriesData).forEach(series => {
+            series.chapters.sort((a, b) => b.name.localeCompare(a.name));
+            // Si tiene capítulos, actualizamos el cover dinámicamente con la primera página del primer capítulo
+            if (series.chapters.length > 0) {
+                series.cover = obtenerUrlCDN(series.chapters[series.chapters.length - 1].images[0].download_url);
+            }
+        });
+
+        // Frases de índice literal para buscar fácilmente en el código fuente
+        const listaDescripcionesFijas = [
+            "Indice 01",
+            "Indice 02",
+            "Indice 03",
+            "Indice 04",
+            "Indice 05",
+            "Indice 06",
+            "Indice 07",
+            "Indice 08",
+            "Indice 09",
+            "Indice 10",
+            "Indice 11",
+            "Indice 12",
+            "Indice 13",
+            "Indice 14",
+            "Indice 15",
+            "Indice 16",
+            "Indice 17",
+            "Indice 18",
+            "Indice 19",
+            "Indice 20"
+        ];
+
+        // Asignar descripción secuencial única para cada serie activa usando la lista literal (excepto Thalesis y Mizuvichi que tienen descripciones fijas personalizadas)
+        let indexCounter = 0;
+        Object.values(seriesData).forEach(series => {
+            if (series.chapters.length > 0) {
+                if (series.id !== "thalesis" && series.id !== "mizuvichi") {
+                    series.description = listaDescripcionesFijas[indexCounter] || `Indice ${String(indexCounter + 1).padStart(2, '0')}`;
+                    indexCounter++;
+                }
+            }
+        });
+
+        // Renderizar tarjetas de series
+        renderizarTarjetasGaleria();
+
+        // Comprobar rutas en hash al cargar
+        comprobarRutasHash();
+
+    } catch (error) {
+        console.error("Error cargando la galería:", error);
+    }
+}
+
+function renderizarTarjetasGaleria() {
+    const gridManga = document.getElementById("grid-manga");
+    const gridOneShot = document.getElementById("grid-one-shot");
+
+    gridManga.innerHTML = "";
+    gridOneShot.innerHTML = "";
+
+    let countManga = 0;
+    let countOneShot = 0;
+
+    Object.values(seriesData).forEach(series => {
+        if (series.chapters.length === 0 && series.status !== "pronto") {
+            return; // No mostramos series vacías en la galería, a menos que sean Muy Pronto
+        }
+
+        const card = document.createElement("div");
+        card.className = "series-card";
+        card.setAttribute("data-type", series.type);
+
+        let cardBadgeHtml = `<span class="series-badge ${series.type}">${series.type}</span>`;
+        if (series.status === "pronto") {
+            cardBadgeHtml = `<span class="series-badge" style="border-color:#ffd700; color:#ffd700; text-shadow:0 0 5px #ffd700;">Muy Pronto</span>`;
+        }
+
+        card.innerHTML = `
+            <div class="series-cover-wrapper">
+                ${cardBadgeHtml}
+                <img class="series-cover" src="${series.cover}" alt="${series.title}" loading="lazy">
+            </div>
+            <div class="series-info">
+                <h3 class="series-title">${series.title}</h3>
+                <span class="series-author">Por ${series.author}</span>
+            </div>
+        `;
+
+        card.addEventListener("click", () => {
+            irADetalleSerie(series.id);
+        });
+
+        if (series.type === "manga") {
+            gridManga.appendChild(card);
+            countManga++;
+        } else {
+            gridOneShot.appendChild(card);
+            countOneShot++;
+        }
+    });
+
+    if (countManga === 0) {
+        gridManga.innerHTML = `<p style="color: #666; font-size: 1.1rem; text-align: center; grid-column: 1 / -1; margin: 40px 0; font-style: italic;">No hay mangas disponibles por el momento.</p>`;
+    }
+    if (countOneShot === 0) {
+        gridOneShot.innerHTML = `<p style="color: #666; font-size: 1.1rem; text-align: center; grid-column: 1 / -1; margin: 40px 0; font-style: italic;">No hay One Shots disponibles por el momento.</p>`;
+    }
+}
+
+function irADetalleSerie(seriesId, scroll = true) {
+    activeSeriesId = seriesId;
+    window.location.hash = `serie=${seriesId}`;
+
+    const series = seriesData[seriesId];
+    if (!series) return;
+
+    document.getElementById("series-poster").src = obtenerUrlCDN(series.cover);
+    document.getElementById("series-title").innerText = series.title;
+    document.getElementById("series-author").innerText = `Autor: ${series.author}`;
+    document.getElementById("series-desc").innerText = series.description;
+
+    // Renderizar botón de "Continuar leyendo" si hay progreso guardado
+    let continueBtnContainer = document.getElementById("continue-reading-container");
+    if (!continueBtnContainer) {
+        continueBtnContainer = document.createElement("div");
+        continueBtnContainer.id = "continue-reading-container";
+        continueBtnContainer.style.marginTop = "15px";
+        const descEl = document.getElementById("series-desc");
+        descEl.parentNode.insertBefore(continueBtnContainer, descEl.nextSibling);
+    }
+    continueBtnContainer.innerHTML = "";
+
+    const progresoGuardado = localStorage.getItem(`marcador_${seriesId}`);
+    if (progresoGuardado !== null) {
+        const saveIdx = parseInt(progresoGuardado, 10);
+        if (saveIdx >= 0 && saveIdx < series.chapters.length) {
+            const capGuardado = series.chapters[saveIdx];
+            let labelCap = "";
+            if (series.type === "one-shot") {
+                labelCap = "One Shot";
+            } else {
+                labelCap = formatearNombreCapitulo(capGuardado.name);
+            }
+
+            const btn = document.createElement("button");
+            btn.className = "viewer-btn";
+            btn.style.cssText = "background: #00ff66; color: #000; border-color: #00ff66; box-shadow: 0 0 10px rgba(0, 255, 102, 0.4); border-radius: 20px; font-size: 0.9rem; padding: 8px 20px; display: inline-flex; align-items: center; gap: 8px;";
+            btn.innerHTML = `<i class="fas fa-play"></i> Continuar: ${labelCap}`;
+            btn.addEventListener("click", () => {
+                window.abrirVisor(saveIdx);
+            });
+            continueBtnContainer.appendChild(btn);
+        }
+    }
+
+    // Renderizar etiqueta de estado de la serie (Verde en emisión, Blanco en pausa, Rojo en terminado)
+    let labelStatus = "";
+    let statusClass = series.status || "emision";
+    if (series.type === "one-shot") {
+        labelStatus = "Terminado";
+        statusClass = "terminado";
+    } else {
+        if (statusClass === "emision") labelStatus = "En emisión";
+        else if (statusClass === "pausa") labelStatus = "En pausa";
+        else if (statusClass === "terminado") labelStatus = "Terminado";
+        else if (statusClass === "pronto") labelStatus = "Muy pronto";
+    }
+
+    const metaContainer = document.querySelector("#series-detail-container .series-detail-meta");
+    if (metaContainer) {
+        // Eliminar badge anterior si existe para evitar duplicación
+        const oldBadge = metaContainer.querySelector(".status-badge");
+        if (oldBadge) oldBadge.remove();
+
+        // Crear y añadir nuevo badge de estado
+        const badgeSpan = document.createElement("span");
+        if (statusClass === "pronto") {
+            badgeSpan.className = `status-badge`;
+            badgeSpan.style.cssText = "background: rgba(255, 215, 0, 0.1); color: #ffd700; border: 1px solid #ffd700; box-shadow: 0 0 8px rgba(255, 215, 0, 0.2);";
+        } else {
+            badgeSpan.className = `status-badge ${statusClass}`;
+        }
+        badgeSpan.innerText = labelStatus;
+        metaContainer.appendChild(badgeSpan);
+    }
+
+    // Renderizar capítulos de esta serie
+    const contenedorCapitulos = document.getElementById("chapters");
+    contenedorCapitulos.innerHTML = "";
+
+    // Copiamos la lista de capítulos de esta serie a la variable global listaCapitulosGuardados
+    // para que el visor pueda navegar secuencialmente entre ellos
+    listaCapitulosGuardados = series.chapters;
+
+    if (listaCapitulosGuardados.length === 0) {
+        if (statusClass === "pronto") {
+            contenedorCapitulos.innerHTML = `
+            <div style='text-align:center; padding:40px 20px; background:#0a0a0a; border:1px solid #1a1a1a; border-radius:12px; margin-top:20px;'>
+                <span style='font-size:3rem;'>⏳</span>
+                <h3 style='margin:15px 0 10px 0; color:#ffd700;'>¡Muy pronto!</h3>
+                <p style='color:#888; font-size:0.95rem; max-width:400px; margin:0 auto;'>Esta obra está en preparación. ¡Muy pronto subiremos el primer capítulo, mantente atento!</p>
+            </div>`;
+        } else {
+            contenedorCapitulos.innerHTML = `<p style="color:#666; font-size:1rem; text-align:center; margin:30px 0;">¡Próximamente nuevos capítulos!</p>`;
+        }
+    } else {
+        listaCapitulosGuardados.forEach((cap) => {
+            const card = document.createElement("div");
+            card.className = "chapter";
+            
+            // Determinar título del capítulo (sin numeración si es One Shot)
+            let tituloCap = "";
+            if (series.type === "one-shot") {
+                tituloCap = "Leer One Shot";
+            } else {
+                tituloCap = formatearNombreCapitulo(cap.name);
+            }
+
+            card.innerHTML = `
+            <div class="chapter-header">
+                <div class="chapter-left">
+                    <img class="chapter-thumb" src="${obtenerUrlCDN(cap.images[0].download_url)}">
+                    <div><h3>${tituloCap}</h3><div class="chapter-views" id="views-${cap.uniqueId}">...</div></div>
+                </div>
+                <div>▶</div>
+            </div>
+            `;
+            card.querySelector(".chapter-header").addEventListener("click", () => {
+                const index = listaCapitulosGuardados.findIndex(c => c.name === cap.name);
+                window.abrirVisor(index);
+            });
+            contenedorCapitulos.appendChild(card);
+            window.escucharVisitasCapitulo(cap.uniqueId, card.querySelector(`#views-${cap.uniqueId}`));
+        });
+    }
+
+    // Switch views
+    document.getElementById("gallery-home-section").style.display = "none";
+    document.getElementById("aviso-section").style.display = "none";
+    document.getElementById("series-detail-container").style.display = "block";
+
+    if (scroll) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+function volverALagaleria() {
+    activeSeriesId = null;
+    history.pushState("", document.title, window.location.pathname + window.location.search);
+    document.getElementById("series-detail-container").style.display = "none";
+    document.getElementById("gallery-home-section").style.display = "block";
+    document.getElementById("aviso-section").style.display = "block";
+}
+
+function comprobarRutasHash() {
+    const hash = window.location.hash;
+    if (hash.startsWith("#capitulo=")) {
+        const nombreCap = hash.replace("#capitulo=", "");
+        // Buscamos a qué serie pertenece
+        let serieEncontrada = null;
+        let capIndex = -1;
+
+        for (const sId in seriesData) {
+            const idx = seriesData[sId].chapters.findIndex(c => c.name === nombreCap);
+            if (idx !== -1) {
+                serieEncontrada = sId;
+                capIndex = idx;
+                break;
+            }
+        }
+
+        if (serieEncontrada && capIndex !== -1) {
+            irADetalleSerie(serieEncontrada, false);
+            window.abrirVisor(capIndex);
+        }
+    } else if (hash.startsWith("#serie=")) {
+        const seriesId = hash.replace("#serie=", "");
+        if (seriesData[seriesId]) {
+            irADetalleSerie(seriesId);
+        }
+    } else {
+        // Si no hay hash de detalle o visor, nos aseguramos de mostrar la galería
+        document.getElementById("viewer-container").style.display = "none";
+        document.body.style.overflow = "auto";
+        document.getElementById("series-detail-container").style.display = "none";
+        document.getElementById("gallery-home-section").style.display = "block";
+        document.getElementById("aviso-section").style.display = "block";
+    }
+}
+
+window.addEventListener("hashchange", comprobarRutasHash);
+
+let viewerLazyObserver = null;
+
+function inicializarLazyObserver() {
+    if (viewerLazyObserver) return;
+    viewerLazyObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const wrapper = entry.target;
+                const img = wrapper.querySelector('img');
+                if (img && img.hasAttribute("data-src")) {
+                    img.src = img.getAttribute("data-src");
+                    img.removeAttribute("data-src");
+                }
+                viewerLazyObserver.unobserve(wrapper);
+            }
+        });
+    }, {
+        root: document.getElementById("viewer-container"),
+        rootMargin: "1200px 0px" // Carga las páginas 1200px antes de que entren en pantalla para una fluidez óptima
+    });
+}
+
+window.abrirVisor = function(index, scrollAComentarios = false) {
+    if (index < 0 || index >= listaCapitulosGuardados.length) return;
+    window.cancelReply();
+    indiceCapituloActual = index;
+    const capitulo = listaCapitulosGuardados[indiceCapituloActual];
+    window.location.hash = `capitulo=${capitulo.name}`;
+
+    // Guardar progreso del lector para "Continuar Leyendo"
+    if (activeSeriesId) {
+        localStorage.setItem(`marcador_${activeSeriesId}`, index);
+    }
+    
+    // Aseguramos que el observador de carga perezosa esté inicializado
+    inicializarLazyObserver();
+
+    // Obtener serie activa para comprobar el tipo y omitir numeración si es One Shot
+    const activeSeries = seriesData[activeSeriesId];
+    let tituloFormateado = "";
+    if (activeSeries && activeSeries.type === "one-shot") {
+        tituloFormateado = activeSeries.title; // Sólo el título de la obra
+    } else {
+        tituloFormateado = formatearNombreCapitulo(capitulo.name);
+    }
+
+    document.getElementById("viewer-title").innerText = tituloFormateado;
+    document.getElementById("viewer-title-bottom").innerText = tituloFormateado;
+
+    const contentDiv = document.getElementById("viewer-content");
+    contentDiv.innerHTML = ""; 
+
+    // MUESTRA EL VISOR DE MANERA INSTANTÁNEA (Evita cualquier retraso o congelación del hilo principal)
+    document.getElementById("viewer-container").style.display = "block";
+    document.getElementById("viewer-container").scrollTop = 0;
+    document.body.style.overflow = "hidden";
+    window.verificarYBloquearNombre();
+
+    const esPrimero = indiceCapituloActual === 0;
+    const esUltimo = indiceCapituloActual === listaCapitulosGuardados.length - 1;
+
+    document.getElementById("btn-prev").disabled = esUltimo;
+    document.getElementById("btn-prev-bottom").disabled = esUltimo;
+    document.getElementById("btn-next").disabled = esPrimero;
+    document.getElementById("btn-next-bottom").disabled = esPrimero;
+
+    // Deferimos la creación de la galería de imágenes a un micro-frame asincrónico
+    setTimeout(() => {
+        // Creamos un DocumentFragment para acumular todas las imágenes en memoria,
+        // evitando reflows intermedios y reduciendo drásticamente el uso de CPU/GPU.
+        const fragment = document.createDocumentFragment();
+        
+        capitulo.images.forEach((img, i) => {
+            // Crear contenedor del wrapper de la página
+            const wrapper = document.createElement("div");
+            wrapper.className = "viewer-page-wrapper";
+
+            // Crear la "bolita de carga" (spinner)
+            const spinner = document.createElement("div");
+            spinner.className = "loading-spinner";
+            wrapper.appendChild(spinner);
+
+            // Crear la imagen
+            const imageElement = document.createElement("img");
+            imageElement.decoding = "async";
+            
+            if (i < 3) {
+                imageElement.loading = "eager";
+                imageElement.setAttribute("fetchpriority", "high");
+            } else {
+                imageElement.loading = "lazy";
+            }
+
+            // Función para manejar la finalización de carga de la imagen
+            const alCargarImagen = () => {
+                imageElement.classList.add("loaded");
+                spinner.style.opacity = "0";
+                // Eliminar el spinner del DOM después de la transición de opacidad
+                setTimeout(() => {
+                    if (spinner.parentNode) {
+                        spinner.remove();
+                    }
+                }, 300);
+
+                // Si la imagen tiene dimensiones válidas, ajustar aspect-ratio del contenedor
+                if (imageElement.naturalWidth && imageElement.naturalHeight) {
+                    const ratio = imageElement.naturalWidth / imageElement.naturalHeight;
+                    wrapper.style.aspectRatio = ratio;
+                }
+            };
+
+            imageElement.onload = alCargarImagen;
+            imageElement.onerror = () => {
+                // En caso de error, ocultamos el spinner para no bloquear visualmente
+                spinner.style.opacity = "0";
+                setTimeout(() => { if (spinner.parentNode) spinner.remove(); }, 300);
+            };
+
+            // Asignar el src de forma inteligente:
+            // Las primeras 3 páginas se cargan inmediatamente para lectura instantánea,
+            // las demás se difieren al IntersectionObserver para evitar congelamientos ("frizado") de pantalla.
+            const imgUrl = obtenerUrlCDN(img.download_url);
+            if (i < 3) {
+                imageElement.src = imgUrl;
+                if (imageElement.complete) {
+                    alCargarImagen();
+                }
+            } else {
+                imageElement.setAttribute("data-src", imgUrl);
+                viewerLazyObserver.observe(wrapper);
+            }
+
+            wrapper.appendChild(imageElement);
+            fragment.appendChild(wrapper);
+        });
+        
+        contentDiv.appendChild(fragment);
+        window.registrarVisitaCapitulo(capitulo.uniqueId);
+
+        // Diferimos la carga pesada de los comentarios en 200ms para liberar el hilo principal del navegador
+        setTimeout(() => {
+            window.cargarComentariosDelCapitulo(capitulo.uniqueId, document.getElementById("lista-comentarios"), scrollAComentarios);
+        }, 200);
+    }, 50);
+}
+
+document.getElementById("formulario-comentario").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const cap = listaCapitulosGuardados[indiceCapituloActual];
+    if (cap) {
+        window.intentarPublicarComentario(cap.uniqueId, document.getElementById("comentario-nombre").value, document.getElementById("comentario-texto").value);
+        document.getElementById("comentario-texto").value = "";
+    }
+});
+
+const cerrarVisor = () => {
+    document.getElementById("viewer-container").style.display = "none";
+    document.body.style.overflow = "auto";
+    if (activeSeriesId) {
+        window.location.hash = `serie=${activeSeriesId}`;
+    } else {
+        history.pushState("", document.title, window.location.pathname + window.location.search);
+    }
+};
+
+document.getElementById("btn-close").addEventListener("click", cerrarVisor);
+document.getElementById("btn-close-bottom").addEventListener("click", cerrarVisor);
+
+document.getElementById("btn-cancel-reply").addEventListener("click", window.cancelReply);
+
+
+const irAnterior = () => window.abrirVisor(indiceCapituloActual + 1);
+const irSiguiente = () => window.abrirVisor(indiceCapituloActual - 1);
+
+document.getElementById("btn-prev").addEventListener("click", irAnterior);
+document.getElementById("btn-prev-bottom").addEventListener("click", irAnterior);
+document.getElementById("btn-next").addEventListener("click", irSiguiente);
+document.getElementById("btn-next-bottom").addEventListener("click", irSiguiente);
+
+let ultimoScroll = 0;
+const visorContainer = document.getElementById("viewer-container");
+const barraNav = document.getElementById("viewer-nav");
+visorContainer.addEventListener("scroll", () => {
+    let scrollActual = visorContainer.scrollTop;
+    if (scrollActual > ultimoScroll && scrollActual > 50) barraNav.classList.add("hidden"); 
+    else barraNav.classList.remove("hidden");
+    ultimoScroll = scrollActual;
+});
+
+const iniciarTodo = () => {
+    window.registrarVisitaInicio();
+    window.escucharVisitasGlobales();
+    cargarAvisos();
+    inicializarGaleria();
+
+    // Configuración de los botones de pestañas (Tabs)
+    const tabBtns = document.querySelectorAll(".tab-btn");
+    tabBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            tabBtns.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const targetTab = btn.getAttribute("data-tab");
+            document.querySelectorAll(".gallery-section").forEach(sec => {
+                sec.classList.remove("active");
+            });
+
+            if (targetTab === "manga") {
+                document.getElementById("sec-manga").classList.add("active");
+            } else {
+                document.getElementById("sec-one-shot").classList.add("active");
+            }
+        });
+    });
+
+    // Botón volver a galería
+    document.getElementById("btn-back-gallery").addEventListener("click", volverALagaleria);
+};
+
+if (document.readyState === "loading") {
+    window.addEventListener("DOMContentLoaded", iniciarTodo);
+} else {
+    iniciarTodo();
+}
