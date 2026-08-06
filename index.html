@@ -514,12 +514,44 @@ header:hover .online-counter, header:active .online-counter {
     position: relative;
 }
 
-.action-btn.like-btn:hover {
-    color: #0084ff;
+.reactions-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: #151515;
+    padding: 4px 8px;
+    border-radius: 20px;
+    border: 1px solid #222;
 }
 
-.action-btn.like-btn.liked {
-    color: #0084ff;
+.reaction-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    color: #888;
+}
+
+.reaction-btn:hover {
+    background: #252525;
+    transform: scale(1.15);
+}
+
+.reaction-btn.reacted {
+    background: rgba(255, 0, 0, 0.15);
+    border: 1px solid rgba(255, 0, 0, 0.3);
+    color: #fff;
+}
+
+.reaction-count {
+    font-size: 0.8rem;
+    font-weight: bold;
 }
 
 .action-btn.delete-btn {
@@ -1112,34 +1144,7 @@ header:hover .online-counter, header:active .online-counter {
 </a>
 </div>
 
-<script>
-  // Cargador asincrónico dinámico de cont.html para una perfecta modularización
-  fetch('cont.html')
-    .then(response => {
-      if (!response.ok) {
-        throw new Error("No se pudo cargar cont.html");
-      }
-      return response.text();
-    })
-    .then(html => {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const script = doc.querySelector('script');
-      if (script) {
-        const blob = new Blob([script.textContent], { type: 'application/javascript' });
-        const url = URL.createObjectURL(blob);
-        const newScript = document.createElement('script');
-        newScript.type = 'module';
-        newScript.src = url;
-        document.body.appendChild(newScript);
-      } else {
-        console.error("No se encontró el script en cont.html");
-      }
-    })
-    .catch(error => {
-      console.error("Error al inicializar el cargador dinámico:", error);
-    });
-</script>
+<script type="module" src="cont.js"></script>
 
 </body>
 </html>
