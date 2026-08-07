@@ -254,7 +254,6 @@ header:hover .online-counter, header:active .online-counter {
     z-index: 9999; 
     overflow-y: auto; 
     -webkit-overflow-scrolling: touch; /* Desplazamiento inercial suave en iOS */ 
-    scroll-behavior: smooth; 
     overscroll-behavior-y: contain; /* Evita arrastrar el body de fondo */ 
 } 
  
@@ -2037,34 +2036,11 @@ header:hover .online-counter, header:active .online-counter {
       // Creamos un DocumentFragment para acumular todas las imágenes en memoria, 
       // evitando reflows intermedios y reduciendo drásticamente el uso de CPU/GPU. 
       const fragment = document.createDocumentFragment(); 
-       
-      // Para optimización de carga ultrarrápida, implementamos un Intersection Observer 
-      // para cargar perezosamente (lazy load) las imágenes a medida que entran en la pantalla. 
-      const obsOptions = { 
-          root: document.getElementById("viewer-container"), 
-          rootMargin: "600px 0px", // Margen amplio para cargar imágenes antes de que sean visibles 
-          threshold: 0.01 
-      }; 
-       
-      const imgObserver = new IntersectionObserver((entries, observer) => { 
-          entries.forEach(entry => { 
-              if (entry.isIntersecting) { 
-                  const wrapper = entry.target; 
-                  const img = wrapper.querySelector("img"); 
-                  if (img && img.dataset.src && !img.src) { 
-                      img.src = img.dataset.src; 
-                  } 
-                  observer.unobserve(wrapper); 
-              } 
-          }); 
-      }, obsOptions); 
  
-      capitulo.images.forEach((img, i) => { 
-          // Crear contenedor del wrapper de la página 
-          const wrapper = document.createElement("div"); 
-          wrapper.className = "viewer-page-wrapper"; 
+      // Helper para crear y agregar dinámicamente el spinner de carga TikTok premium sólo cuando sea necesario 
+      const crearYAgregarSpinner = (wrapper) => { 
+          if (wrapper.querySelector(".loading-spinner")) return; 
  
-          // Crear la "bolita de carga" (spinner) estilo TikTok con 4 puntos de colores 
           const spinner = document.createElement("div"); 
           spinner.className = "loading-spinner"; 
           
@@ -2082,6 +2058,34 @@ header:hover .online-counter, header:active .online-counter {
           spinner.appendChild(dotWhite); 
           spinner.appendChild(dotGold); 
           wrapper.appendChild(spinner); 
+      }; 
+       
+      // Para optimización de carga ultrarrápida, implementamos un Intersection Observer 
+      // para cargar perezosamente (lazy load) las imágenes a medida que entran en la pantalla. 
+      const obsOptions = { 
+          root: document.getElementById("viewer-container"), 
+          rootMargin: "600px 0px", // Margen amplio para cargar imágenes antes de que sean visibles 
+          threshold: 0.01 
+      }; 
+       
+      const imgObserver = new IntersectionObserver((entries, observer) => { 
+          entries.forEach(entry => { 
+              if (entry.isIntersecting) { 
+                  const wrapper = entry.target; 
+                  const img = wrapper.querySelector("img"); 
+                  if (img && img.dataset.src && !img.src) { 
+                      crearYAgregarSpinner(wrapper); 
+                      img.src = img.dataset.src; 
+                  } 
+                  observer.unobserve(wrapper); 
+              } 
+          }); 
+      }, obsOptions); 
+ 
+      capitulo.images.forEach((img, i) => { 
+          // Crear contenedor del wrapper de la página 
+          const wrapper = document.createElement("div"); 
+          wrapper.className = "viewer-page-wrapper"; 
  
           // Crear la imagen 
           const imageElement = document.createElement("img"); 
@@ -2090,13 +2094,16 @@ header:hover .online-counter, header:active .online-counter {
           // Función para manejar la finalización de carga de la imagen 
           const alCargarImagen = () => { 
               imageElement.classList.add("loaded"); 
-              spinner.style.opacity = "0"; 
-              // Eliminar el spinner del DOM después de la transición de opacidad 
-              setTimeout(() => { 
-                  if (spinner.parentNode) { 
-                      spinner.remove(); 
-                  } 
-              }, 300); 
+              const spinner = wrapper.querySelector(".loading-spinner"); 
+              if (spinner) { 
+                  spinner.style.opacity = "0"; 
+                  // Eliminar el spinner del DOM después de la transición de opacidad 
+                  setTimeout(() => { 
+                      if (spinner.parentNode) { 
+                          spinner.remove(); 
+                      } 
+                  }, 300); 
+              } 
  
               // Si la imagen tiene dimensiones válidas, ajustar aspect-ratio del contenedor 
               if (imageElement.naturalWidth && imageElement.naturalHeight) { 
@@ -2108,8 +2115,11 @@ header:hover .online-counter, header:active .online-counter {
           imageElement.onload = alCargarImagen; 
           imageElement.onerror = () => { 
               // En caso de error, ocultamos el spinner para no bloquear visualmente 
-              spinner.style.opacity = "0"; 
-              setTimeout(() => { if (spinner.parentNode) spinner.remove(); }, 300); 
+              const spinner = wrapper.querySelector(".loading-spinner"); 
+              if (spinner) { 
+                  spinner.style.opacity = "0"; 
+                  setTimeout(() => { if (spinner.parentNode) spinner.remove(); }, 300); 
+              } 
           }; 
  
           const urlCDN = obtenerUrlCDN(img.download_url); 
@@ -2118,6 +2128,7 @@ header:hover .online-counter, header:active .online-counter {
           if (i < 3) { 
               imageElement.loading = "eager"; 
               imageElement.setAttribute("fetchpriority", "high"); 
+              crearYAgregarSpinner(wrapper); 
               imageElement.src = urlCDN; 
               if (imageElement.complete) { 
                   alCargarImagen(); 
@@ -2143,7 +2154,7 @@ header:hover .online-counter, header:active .online-counter {
       document.getElementById("btn-next").disabled = esPrimero; 
       document.getElementById("btn-next-bottom").disabled = esPrimero; 
       document.getElementById("viewer-container").style.display = "block"; 
-      document.getElementById("viewer-container").scrollTop = 0; 
+      document.getElementById("viewer-container").scrollTo({ top: 0, behavior: "instant" }); 
       document.body.style.overflow = "hidden"; 
       window.verificarYBloquearNombre(); 
       window.registrarVisitaCapitulo(capitulo.uniqueId); 
@@ -2185,12 +2196,18 @@ header:hover .online-counter, header:active .online-counter {
   let ultimoScroll = 0; 
   const visorContainer = document.getElementById("viewer-container"); 
   const barraNav = document.getElementById("viewer-nav"); 
+  const deltaScroll = 15; // Umbral de píxeles para evitar parpadeos en el deslizamiento de la barra de navegación 
   visorContainer.addEventListener("scroll", () => { 
       let scrollActual = visorContainer.scrollTop; 
-      if (scrollActual > ultimoScroll && scrollActual > 50) barraNav.classList.add("hidden");  
-      else barraNav.classList.remove("hidden"); 
+      if (Math.abs(ultimoScroll - scrollActual) <= deltaScroll) return; 
+       
+      if (scrollActual > ultimoScroll && scrollActual > 80) { 
+          barraNav.classList.add("hidden");  
+      } else if (scrollActual < ultimoScroll) { 
+          barraNav.classList.remove("hidden"); 
+      } 
       ultimoScroll = scrollActual; 
-  }); 
+  }, { passive: true }); 
  
   window.addEventListener("DOMContentLoaded", () => { 
       window.registrarVisitaInicio(); 
